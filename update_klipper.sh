@@ -90,7 +90,7 @@ update_mcus () {
         # Clean the previous build and configure for the selected MCU
         make clean $config_file_str
         if $QUIET ; then   
-            if [ ! -f "$script_path/config/config/config.$mcu" ]; then
+            if [ ! -f "$script_path/config/config.$mcu" ]; then
                 echo -e "\e[1;31m ${1^} No config file for $mcu, \nDon't use quiet mode first !\nFimware update \e[0m"
                 exit 0
             fi  
