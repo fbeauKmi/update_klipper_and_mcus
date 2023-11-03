@@ -39,7 +39,7 @@ The flash command depends on you mcus and the way you choose to flash your board
 [RaspberryPi]
 flash_commands: make flash
 ```
-_source : [Klipper docummentation](https://)
+_source : [Klipper documentation](https://www.klipper3d.org/RPi_microcontroller.html#building-the-micro-controller-code)
 
 ## Usage
 ```
