@@ -34,7 +34,11 @@ function init_array(){
         # Store the order of MCUs in mcu_order array
         mcu_order+=("$section")
       elif [[ $key == flash_command ]]; then
-        flash_actions[$section]="$value"
+        if [ -n "${flash_actions[$section]}" ]; then
+            flash_actions[$section]="${flash_actions[$section]};$value"
+        else
+            flash_actions[$section]="$value"
+        fi
       elif [[ $key == make_options ]]; then
         make_options[$section]="$value"
       fi
