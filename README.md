@@ -21,9 +21,10 @@ service klipper start
 ### Copy ``update_klipper.sh`` and ``mcus.ini`` ...
 ...  and ``mcus.ini`` in a folder of your pi, ``~/scripts/`` sounds as a good choice. 
 
-|
-If you use a preversion of this script, copy the configuration files from ``~/klipper/`` to ``<script_folder>/config/``
-|
+
+>### WARNING ! 
+>If you use a previous version of this script, copy the configuration files from ``~/klipper/`` to ``<script_folder>/config/``
+
 
 ### Edit mcus.ini
 
