@@ -100,7 +100,11 @@ update_mcus () {
         
         # Check CPU thread number (added by @roguyt to build faster)
         CPUS=`grep -c ^processor /proc/cpuinfo`
-        make -j $CPUS $config_file_str
+	if $QUIET ; then
+	    make -j $CPUS $config_file_str &> /dev/null
+	else
+	    make -j $CPUS $config_file_str
+	fi
 
         if prompt "No errors? Press [Y] to flash $mcu" ; then
             # Split the flash command string into separate commands and run each one
