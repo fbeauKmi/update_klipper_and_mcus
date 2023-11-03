@@ -14,6 +14,7 @@ EOF
 }
 
 # Define an associative arrays "flash_actions", "make_options" to hold flash commands for different MCUs
+declare -A preflash_actions
 declare -A flash_actions
 declare -A make_options
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
@@ -41,6 +42,12 @@ function init_array(){
         fi
       elif [[ $key == make_options ]]; then
         make_options[$section]="$value"
+      elif [[ $key == preflash_command ]]; then
+        if [ -n "${preflash_actions[$section]}" ]; then
+	    preflash_actions[$section]="${preflash_actions[$section]};$value"
+	else
+	    preflash_actions[$section]="$value"
+	fi
       fi
     done < $filename
     if [ ${#flash_actions[@]} == 0 ]; then
@@ -97,7 +104,7 @@ update_mcus () {
         else 
             make menuconfig $config_file_str 
         fi
-        
+
         # Check CPU thread number (added by @roguyt to build faster)
         CPUS=`grep -c ^processor /proc/cpuinfo`
 	if $QUIET ; then
@@ -107,6 +114,13 @@ update_mcus () {
 	fi
 
         if prompt "No errors? Press [Y] to flash $mcu" ; then
+	    # Split the preflash command string into separate commands and run each one
+            IFS=";" read -ra commands <<< "${preflash_actions[$mcu]}"
+            for command in "${commands[@]}"; do
+                echo "Command: $command"
+                eval "$command"
+            done
+
             # Split the flash command string into separate commands and run each one
             IFS=";" read -ra commands <<< "${flash_actions[$mcu]}"
             for command in "${commands[@]}"; do
