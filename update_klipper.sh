@@ -117,7 +117,7 @@ update_mcus () {
 	          # Split the prepare command string into separate commands and run each one
             IFS=";" read -ra commands <<< "${prepare_actions[$mcu]}"
             for command in "${commands[@]}"; do
-                echo "Command: $command"
+                echo "Prepare Command: $command"
 
                 if $QUIET ; then
                     eval "$command" &> /dev/null
@@ -134,7 +134,7 @@ update_mcus () {
                     # Add KCONFIG_CONFIG=config/$mcu after "make flash"
                     command="${command/make\ flash/make\ flash\ $config_file_str}"
                 fi
-                echo "Command: $command"
+                echo "Flash Command: $command"
                 eval "$command"
             done
         fi
