@@ -15,7 +15,6 @@ EOF
 
 # Define an associative arrays "flash_actions", "make_options" to hold flash commands for different MCUs
 declare -A flash_actions
-declare -A make_options
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
 mcu_order=()
 
@@ -31,16 +30,27 @@ function init_array(){
       if [[ $key == \[*] ]]; then
         section=${key#[}
         section=${section%]}
+        
         # Store the order of MCUs in mcu_order array
         mcu_order+=("$section")
-      elif [[ $key == flash_command ]]; then
+      elif [[ $key == flash_command || $key == quiet_command || $key == action_command ]]; then
+        
+        # Warn deprecated config
+        if [[ $key == flash_command ]]; then
+          echo -e "\e[1;31m flash_command is DEPRECATED, will be removed soon, use action_command or quiet_command instead \e[0m"
+        fi
+        
+        # Make command quiet, except for stderr, when needed
+        if [[ $key == quiet_command ]] && $QUIET ; then
+          value="$value >/dev/null"
+        fi
+
+        # append command to string
         if [ -n "${flash_actions[$section]}" ]; then
             flash_actions[$section]="${flash_actions[$section]};$value"
         else
             flash_actions[$section]="$value"
         fi
-      elif [[ $key == make_options ]]; then
-        make_options[$section]="$value"
       fi
     done < $filename
     if [ ${#flash_actions[@]} == 0 ]; then
