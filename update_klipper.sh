@@ -14,6 +14,7 @@ EOF
 }
 
 # Define an associative arrays "flash_actions", "make_options" to hold flash commands for different MCUs
+declare -A prepare_actions
 declare -A flash_actions
 declare -A make_options
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
@@ -41,6 +42,12 @@ function init_array(){
         fi
       elif [[ $key == make_options ]]; then
         make_options[$section]="$value"
+      elif [[ $key == prepare_command ]]; then
+        if [ -n "${prepare_actions[$section]}" ]; then
+	    prepare_actions[$section]="${prepare_actions[$section]};$value"
+	else
+	    prepare_actions[$section]="$value"
+	fi
       fi
     done < $filename
     if [ ${#flash_actions[@]} == 0 ]; then
@@ -97,16 +104,28 @@ update_mcus () {
         else 
             make menuconfig $config_file_str 
         fi
-        
+
         # Check CPU thread number (added by @roguyt to build faster)
         CPUS=`grep -c ^processor /proc/cpuinfo`
-	if $QUIET ; then
-	    make -j $CPUS $config_file_str &> /dev/null
-	else
-	    make -j $CPUS $config_file_str
-	fi
+        if $QUIET ; then
+            make -j $CPUS $config_file_str &> /dev/null
+        else
+            make -j $CPUS $config_file_str
+        fi
 
         if prompt "No errors? Press [Y] to flash $mcu" ; then
+	          # Split the prepare command string into separate commands and run each one
+            IFS=";" read -ra commands <<< "${prepare_actions[$mcu]}"
+            for command in "${commands[@]}"; do
+                echo "Prepare Command: $command"
+
+                if $QUIET ; then
+                    eval "$command" &> /dev/null
+                else
+                    eval "$command"
+                fi
+            done
+
             # Split the flash command string into separate commands and run each one
             IFS=";" read -ra commands <<< "${flash_actions[$mcu]}"
             for command in "${commands[@]}"; do
@@ -115,7 +134,7 @@ update_mcus () {
                     # Add KCONFIG_CONFIG=config/$mcu after "make flash"
                     command="${command/make\ flash/make\ flash\ $config_file_str}"
                 fi
-                echo "Command: $command"
+                echo "Flash Command: $command"
                 eval "$command"
             done
         fi
