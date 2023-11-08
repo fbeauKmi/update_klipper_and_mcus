@@ -31,16 +31,16 @@ chmod +x ~/<script_folder>/update_klipper.sh
 ### Method 2 : 
 ```
 cd ~
-git clone https://github.com/fbeauKmi/update_klipper_and_mcus
+git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git
 ```
 
-Copy ``mcus.ini`` from examples folder to ``~/update_klipper_and_mcus`/``
+Copy and edit ``mcus.ini`` from examples folder to ``~/update_klipper_and_mcus`/``
 
 ### Edit mcus.ini
 
 mcus.ini contains : 
 - sections : the name you give to your mcu between brackets
-- action_command : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by ``;`` or use several action_command in a section, they are executed in order a appearance.
+- action_command : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by ``;`` or use several action_command in a section, they are executed in order of appearance.
 - quiet_command : same as action_command but without stdout in QUIET mode 
 
 The flash command depends on you mcus and the way you choose to flash your board : dfu-util, make flash, flashtool, flash_sdcard, mount/cp/umount ... refer to your board documentation to choose the right command
@@ -68,8 +68,7 @@ _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
 # For a MCU in USB to Can bridge using Katapult as bootloader
 # You have to insert your Canbus_uuid and Usb serial below
 [mcu]
-quiet_command: python3 ~/katapult/scripts/flashtool.py -i can0 -r -u <YOUR_CANBUS_UUID>
-quiet_command: sleep 2
+quiet_command: python3 ~/katapult/scripts/flashtool.py -i can0 -r -u <YOUR_CANBUS_UUID>; sleep 2
 action_command: python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
 ```
 _source : [Roguyt_prepare_command branch ^^](../roguyt_prepare_command/mcus.ini)_
