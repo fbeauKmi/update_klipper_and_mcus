@@ -2,11 +2,12 @@
 
 usage() {
   cat << EOF
-Usage: $0 [<config_file>] [-h]
+Usage: $0 [<mcus.ini>] [-h]
 
 Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
+  -v, --version              Display version of the script (based on the repo)
   -f, --firmware             Do not merge repo, update firmware only
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -h, --help                 Display this help message and exit
@@ -18,7 +19,13 @@ declare -A flash_actions
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
 mcu_order=()
 
+# Get Current script fullpath
 script_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+k_remote_version=$( git -C ~/klipper describe "origin/$(git -C ~/klipper rev-parse --abbrev-ref HEAD)" --tags --always --long)
+k_local_version=$( git -C ~/klipper describe --tags --always --long --dirty)
+k_repo=$(git -C ~/klipper remote get-url origin)
+# Check if the Klipper service is running and save the result in "klipperrunning"
+klipperrunning=$(systemctl is-active klipper >/dev/null 2>&1 && echo true || echo false)
 
 # Define a function to initialize the flash_actions array from the config file
 function init_array(){
@@ -74,6 +81,19 @@ prompt () {
             [Nn]*) return 1  ;;
         esac
     done
+}
+
+# Display versions
+show_version () {
+  s_version=$(git describe --always --tags --long --dirty 2>/dev/null)
+  s_remote=$(git describe "origin/$(git -C ~/klipper rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
+  if [[ $s_version != "" ]] ; then
+    echo -e "updater $s_version"
+  fi
+  if [[ "$s_version" != "$s_remote"* ]] && ! $QUIET; then
+    echo -e "new version available $s_remote"
+  fi
+
 }
 
 # Define a function to update the firmware on the MCUs
@@ -136,63 +156,75 @@ update_mcus () {
 
 # Define a function to start or stop the Klipper service
 function klipperservice {
-    if [[ "$klipperrunning" = "active" ]] || [[ "$1" = "start" ]] ; then
- 	if [[ "$klipperrunning" = "inactive" ]]; then
-	  if prompt "Start Klipper service ?" ; then
-            :
-	  else
-	    return 0
-          fi
-	fi 
-	echo -e "\e[1;31m ${1^} Klipper service\e[0m"
-        sudo service klipper $1
+    if ($klipperrunning) || [[ "$1" = "start" ]] ; then
+      if ! $klipperrunning ; then
+        if prompt "Start Klipper service ?" ; then
+          :
+        else
+          return 0
+        fi
+      fi 
+      echo -e "\e[1;31m ${1^} Klipper service\e[0m"
+      sudo service klipper $1
     fi
 }
-
-# Check if the Klipper service is running and save the result in "klipperrunning"
-klipperrunning=$(systemctl is-active klipper)
 
 # Define the main function
 function main(){
     echo -e "\e[1;35m----------------------------"
     echo "|  Update Klipper & Mcus   |"
-    echo -e "----------------------------\e[0m"
+    echo -e "----------------------------"
+    show_version
+    echo -e "\e[0m"
 
-    init_array
+    if ! $VERSION ; then
+      init_array
 
-    # Change to the Klipper directory
-    cd ~/klipper
+      # Change to the Klipper directory
+      cd ~/klipper
 
-    # Check for updates from the Git repository and prompt the user whether to update the MCUs
-    if $FIRMWAREONLY ; then : ; else 
-      echo -e "\e[1;34m Check for Klipper updates\e[0m" 
-      git_output=$(git pull --ff-only) # Capture stdout
-      if [[ $git_output == *"Already up to date"* ]]; then
-          echo  "Klipper is already up to date"
-	  echo  "Use this script with --firmware option to update MCUs anyway"
-      else
-	TOUPDATE=true
-      fi
-    fi
-    if $TOUPDATE ; then
-        if prompt "Do you want to update mcus now?"; then
-          klipperservice stop # stop the Klipper service
-          update_mcus # call the update_mcus function
-          klipperservice start # start the Klipper service
+      # Check for updates from the Git repository and prompt the user whether to update the MCUs
+      if $FIRMWAREONLY ; then : ; else 
+        echo -e "\e[1;34m Check for Klipper updates\e[0m" 
+        
+        if [[ $k_local_version == $k_remote_version ]]; then
+            echo  "Klipper is already up to date"
+            echo "$k_repo"
+            echo "$k_local_version"  
+            echo  "Use this script with --firmware option to update MCUs anyway"
+        else
+            if [[ $k_local_version == *"dirty"* ]]; then
+              echo "Your repo is dirty, try to solve this before update"
+            else
+              echo  "Updating Klipper from $k_repo"
+              echo "$k_local_version -> $k_remote_version" 
+              git_output=$(git pull --ff-only) # Capture stdout
+              TOUPDATE=true
+            fi
         fi
+      fi
+      if $TOUPDATE ; then
+          if prompt "Do you want to update mcus now?"; then
+            klipperservice stop # stop the Klipper service
+            update_mcus # call the update_mcus function
+            klipperservice start # start the Klipper service
+          fi
+      fi
+      echo -e "\e[1;32mAll operations done ! Bye ! \e[0m"
+      echo -e "\e[1;32mHappy bed engraving !\n\e[0m"
     fi
-    echo -e "\e[1;32mAll operations done ! Bye ! \e[0m"
-    echo -e "\e[1;32mHappy bed engraving !\n\e[0m"
 }
 
-HELP=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false
+HELP=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; VERSION=false;
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -f|--firmware)  FIRMWAREONLY=true; TOUPDATE=true ;;
+    -v|--version)  VERSION=true ;;
+    -f|--firmware) FIRMWAREONLY=true; TOUPDATE=true ;;
     -h|--help)     HELP=true  ;;
     -q|--quiet)    QUIET=true ;;
+    -*|--*)       HELP=true ;;
     *)
       CONFIG=$1
      esac
