@@ -86,7 +86,7 @@ prompt () {
 # Display versions
 show_version () {
   s_version=$(git describe --always --tags --long --dirty 2>/dev/null)
-  s_remote=$(git describe "origin/$(git -C ~/klipper rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
+  s_remote=$(git describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
   if [[ $s_version != "" ]] ; then
     echo -e "updater $s_version"
   fi
