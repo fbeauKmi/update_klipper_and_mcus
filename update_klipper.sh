@@ -8,6 +8,7 @@ Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
   -v, --version              Display version of the script (based on the repo)
+  -c, --checkonly                Check if Klipper is uptodate only.
   -f, --firmware             Do not merge repo, update firmware only
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -h, --help                 Display this help message and exit
@@ -195,13 +196,19 @@ function main(){
             echo "$k_local_version"  
             echo  "Use this script with --firmware option to update MCUs anyway"
         else
-            if [[ $k_local_version == *"dirty"* ]]; then
+            if [[ "$k_local_version" == *"dirty"* ]]; then
               echo "Your repo is dirty, try to solve this before update"
             else
-              echo  "Updating Klipper from $k_repo"
-              echo "$k_local_version -> $k_remote_version" 
-              git_output=$(git pull --ff-only) # Capture stdout
-              TOUPDATE=true
+              
+              echo "$k_local_version -> $k_remote_version"
+              if ! $CHECK ; then
+                echo  "Updating Klipper from $k_repo" 
+                git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
+                TOUPDATE=true
+              else
+                echo  "Klipper can be updated from $k_repo"
+                TOUPDATE=false
+              fi
             fi
         fi
       fi
@@ -217,12 +224,13 @@ function main(){
     fi
 }
 
-HELP=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; VERSION=false;
+HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; VERSION=false;
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -v|--version)  VERSION=true ;;
+    -c|--checkonly)    CHECK=true;;
     -f|--firmware) FIRMWAREONLY=true; TOUPDATE=true ;;
     -h|--help)     HELP=true  ;;
     -q|--quiet)    QUIET=true ;;
