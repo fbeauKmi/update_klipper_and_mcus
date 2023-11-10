@@ -21,7 +21,7 @@ mcu_order=()
 
 # Get Current script fullpath
 script_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-k_remote_version=$( git -C ~/klipper describe "origin/$(git -C ~/klipper rev-parse --abbrev-ref HEAD)" --tags --always --long)
+k_remote_version=$( git -C ~/klipper fetch -q && git -C ~/klipper describe "origin/$(git -C ~/klipper rev-parse --abbrev-ref HEAD)" --tags --always --long)
 k_local_version=$( git -C ~/klipper describe --tags --always --long --dirty)
 k_repo=$(git -C ~/klipper remote get-url origin)
 # Check if the Klipper service is running and save the result in "klipperrunning"
