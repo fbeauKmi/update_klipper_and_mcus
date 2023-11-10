@@ -85,6 +85,7 @@ prompt () {
 
 # Display versions
 show_version () {
+  cd $script_path
   s_version=$(git describe --always --tags --long --dirty 2>/dev/null)
   s_remote=$(git describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
   if [[ $s_version != "" ]] ; then
@@ -117,6 +118,9 @@ update_mcus () {
         # Set config_file in the scripts directory 
         config_file_str="KCONFIG_CONFIG=$script_path/config/config.$mcu"
         
+        # Change to the Klipper directory
+        cd ~/klipper
+
         # Clean the previous build and configure for the selected MCU
         make clean $config_file_str
         if $QUIET ; then   
@@ -179,9 +183,6 @@ function main(){
 
     if ! $VERSION ; then
       init_array
-
-      # Change to the Klipper directory
-      cd ~/klipper
 
       # Check for updates from the Git repository and prompt the user whether to update the MCUs
       if $FIRMWAREONLY ; then : ; else 
