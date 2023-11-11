@@ -190,7 +190,7 @@ function main(){
       if $FIRMWAREONLY ; then : ; else 
         echo -e "\e[1;34m Check for Klipper updates\e[0m" 
         
-        if [[ $k_local_version == $k_remote_version ]]; then
+        if [[ $k_local_version == $k_remote_version ]] ; then
             echo  "Klipper is already up to date"
             echo "$k_repo"
             echo "$k_local_version"  
@@ -201,6 +201,7 @@ function main(){
             else
               
               echo "$k_local_version -> $k_remote_version"
+              git -C ~/klipper/ log HEAD..origin/master
               if ! $CHECK ; then
                 echo  "Updating Klipper from $k_repo" 
                 git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
