@@ -7,7 +7,6 @@ Usage: $0 [<mcus.ini>] [-h]
 Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
-  -v, --version              Display version of the script (based on the repo)
   -c, --checkonly                Check if Klipper is uptodate only.
   -f, --firmware             Do not merge repo, update firmware only
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
@@ -183,56 +182,55 @@ function main(){
     show_version
     echo -e "\e[0m"
 
-    if ! $VERSION ; then
-      init_array
+    init_array
 
-      # Check for updates from the Git repository and prompt the user whether to update the MCUs
-      if $FIRMWAREONLY ; then : ; else 
-        echo -e "\e[1;34m Check for Klipper updates\e[0m" 
-        
-        if [[ $k_local_version == $k_remote_version ]] ; then
-            echo  "Klipper is already up to date"
-            echo "$k_repo"
-            echo "$k_local_version"  
-            echo  "Use this script with --firmware option to update MCUs anyway"
-        else
-            if [[ "$k_local_version" == *"dirty"* ]]; then
-              echo "Your repo is dirty, try to solve this before update"
-              echo "Conflict to solve : "
-              git status --short
+    # Check for updates from the Git repository and prompt the user whether to update the MCUs
+    if $FIRMWAREONLY ; then : ; else 
+      echo -e "\e[1;34m Check for Klipper updates\e[0m" 
+      
+      if [[ $k_local_version == $k_remote_version ]] ; then
+          echo  "Klipper is already up to date"
+          echo "$k_repo"
+          echo "$k_local_version"  
+          echo  "Use this script with --firmware option to update MCUs anyway"
+      else
+          if [[ "$k_local_version" == *"dirty"* ]]; then
+            echo "Your repo is dirty, try to solve this before update"
+            echo "Conflict(s) to solve : "
+            git status --short
+          else
+            
+            echo "$k_local_version -> $k_remote_version"
+            git -C ~/klipper/ log HEAD..origin/master
+            if ! $CHECK ; then
+              echo  "Updating Klipper from $k_repo" 
+              git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
+              TOUPDATE=true
             else
-              
-              echo "$k_local_version -> $k_remote_version"
-              git -C ~/klipper/ log HEAD..origin/master
-              if ! $CHECK ; then
-                echo  "Updating Klipper from $k_repo" 
-                git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
-                TOUPDATE=true
-              else
-                echo  "Klipper can be updated from $k_repo"
-                TOUPDATE=false
-              fi
+              echo  "Klipper can be updated from $k_repo"
+              TOUPDATE=false
             fi
-        fi
-      fi
-      if $TOUPDATE ; then
-          if prompt "Do you want to update mcus now?"; then
-            klipperservice stop # stop the Klipper service
-            update_mcus # call the update_mcus function
-            klipperservice start # start the Klipper service
           fi
       fi
+    fi
+    if $TOUPDATE ; then
+        if prompt "Do you want to update mcus now?"; then
+          klipperservice stop # stop the Klipper service
+          update_mcus # call the update_mcus function
+          klipperservice start # start the Klipper service
+        fi
+    fi
+    if ! CHECK ; then
       echo -e "\e[1;32mAll operations done ! Bye ! \e[0m"
       echo -e "\e[1;32mHappy bed engraving !\n\e[0m"
     fi
 }
 
-HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; VERSION=false;
+HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false;
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -v|--version)  VERSION=true ;;
     -c|--checkonly)    CHECK=true;;
     -f|--firmware) FIRMWAREONLY=true; TOUPDATE=true ;;
     -h|--help)     HELP=true  ;;
