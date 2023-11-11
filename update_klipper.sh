@@ -198,6 +198,8 @@ function main(){
         else
             if [[ "$k_local_version" == *"dirty"* ]]; then
               echo "Your repo is dirty, try to solve this before update"
+              echo "Conflict to solve : "
+              git status --short
             else
               
               echo "$k_local_version -> $k_remote_version"
