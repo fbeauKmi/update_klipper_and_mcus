@@ -97,10 +97,13 @@ Usage: update_klipper.sh [<config_file>] [-h]
 Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
+  -c, --checkonly            Check if Klipper is up-to-date only.
   -f, --firmware             Do not merge repo, update firmware only
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -h, --help                 Display this help message and exit
 ```
+### -c --checkonly
+Check if Klipper is up-to-date, if not, it displays latest commits.
 ### -f --firmware : to force MCUs update
 Skip Klipper update to repo or force Mcus update if Klipper is already up to date 
 ### -q --quiet : QUIET mode is Dangereous !
