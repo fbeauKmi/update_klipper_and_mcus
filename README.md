@@ -4,6 +4,9 @@
 
 This is small bash script to update klipper and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 
+## Disclaimer
+> **This script does not replace your brain. If you don't know how to flash your boards, just go away !**
+
 # What it does ?
 Update Klipper and apply firmware update for each mcu. Basically it runs:
 ```
@@ -39,7 +42,7 @@ Copy and edit ``mcus.ini`` from examples folder to ``~/update_klipper_and_mcus`/
 ### Edit mcus.ini
 
 mcus.ini contains : 
-- sections : the name you give to your mcu between brackets
+- sections : the name you give to your mcu between brackets (not necessarly the name in Klipper config)
 - action_command : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by ``;`` or use several action_command in a section, they are executed in order of appearance.
 - quiet_command : same as action_command but without stdout in QUIET mode 
 
@@ -59,7 +62,7 @@ _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#build
 # A list of available values can be found here :
 # https://github.com/Klipper3d/klipper/blob/master/scripts/spi_flash/board_defs.py
 
-[mcu]
+[octopus_uart]
 flash_command: ./scripts/flash-sdcard.sh /dev/ttyAMA0 btt-octopus-f446-v1
 ```
 _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
@@ -67,7 +70,7 @@ _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
 ```
 # For a MCU in USB to Can bridge using Katapult as bootloader
 # You have to insert your Canbus_uuid and Usb serial below
-[mcu]
+[octopus_usb2can]
 quiet_command: python3 ~/katapult/scripts/flashtool.py -i can0 -r -u <YOUR_CANBUS_UUID>; sleep 2
 action_command: python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
 ```
