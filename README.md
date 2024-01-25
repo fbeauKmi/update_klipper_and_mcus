@@ -5,7 +5,8 @@
 This is small bash script to update klipper and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 
 ## Disclaimer
-> **This script does not replace your brain. If you don't know how to flash your boards, just go away !**
+>[!WARNING] 
+**This script does not replace your brain. If you don't know how to flash your boards, just go away !**
 
 # What it does ?
 Update Klipper and apply firmware update for each mcu. Basically it runs:
@@ -21,7 +22,7 @@ service klipper start
 
 ## Installation
 
->### WARNING ! 
+>[!IMPORTANT] 
 >If you use a previous version of this script, copy the configuration files from ``~/klipper/`` to ``~/<script_folder>/config/``
 
 ### Method 1 :
