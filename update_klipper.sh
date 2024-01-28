@@ -9,6 +9,7 @@ Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
   -c, --checkonly            Check if Klipper is up to date only.
   -f, --firmware             Do not merge repo, update firmware only
+  -r, --rollback             Rollback to previous installed version
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -h, --help                 Display this help message and exit
 EOF
@@ -186,6 +187,22 @@ function main(){
 
     # Check for updates from the Git repository and prompt the user whether to update the MCUs
     if $FIRMWAREONLY ; then : ; else 
+      if  $ROLLBACK ; then
+	        k_previous_version=$(cat $script_path/config/.previous_version)
+          if [[ $k_previous_version == $k_local_version ]]; then
+		        echo "Nothing to rollback"
+          else
+            echo "Current version Klipper $k_local_version"
+            if [[ "$k_local_version" == *"dirty"* ]]; then
+               echo "WARNING : Rollback a dirty repo will erase untracked files" 
+            fi
+            if prompt "Rollback to $k_previous_version ?"; then
+               git -C ~/klipper reset --hard $k_previous_version
+               TOUPDATE=true
+            fi
+          fi
+      else
+ 
       echo -e "\e[1;34m Check for Klipper updates\e[0m" 
       
       if [[ $k_local_version == $k_remote_version ]] ; then
@@ -201,9 +218,11 @@ function main(){
         else
           
           echo "$k_local_version -> $k_remote_version"
-          git -C ~/klipper/ log HEAD..origin/master
+          echo "$(git -C ~/klipper shortlog HEAD..origin/master| grep -E '^[ ]+\w+' | wc -l) commit(s)  behind repo"
           if ! $CHECK ; then
             echo  "Updating Klipper from $k_repo" 
+            # Store previous version
+            echo "$k_local_version" > $script_path/config/.previous_version           
             git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
             TOUPDATE=true
           else
@@ -211,6 +230,7 @@ function main(){
             TOUPDATE=false
           fi
         fi
+      fi
       fi
     fi
     if $TOUPDATE ; then
@@ -226,13 +246,14 @@ function main(){
     fi
 }
 
-HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false;
+HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -c|--checkonly)    CHECK=true;;
     -f|--firmware) FIRMWAREONLY=true; TOUPDATE=true ;;
+    -r|--rollback)  ROLLBACK=true;;
     -h|--help)     HELP=true  ;;
     -q|--quiet)    QUIET=true ;;
     -*|--*)       HELP=true ;;

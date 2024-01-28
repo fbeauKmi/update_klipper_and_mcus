@@ -103,6 +103,7 @@ Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
   -c, --checkonly            Check if Klipper is up-to-date only.
   -f, --firmware             Do not merge repo, update firmware only
+  -r, --rollback             Rollback to the previous version (this script only)
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -h, --help                 Display this help message and exit
 ```
@@ -110,6 +111,8 @@ Optional args: <config_file> Specify the config file to use. Default is 'mcus.in
 Check if Klipper is up-to-date, if not, it displays latest commits.
 ### -f --firmware : to force MCUs update
 Skip Klipper update to repo or force Mcus update if Klipper is already up to date 
+### -r --rollback
+Rollback to the previous version saved by this script. It proceed a hard reset if the repo is dirty, untracked files will be erased, plugins will need to be reinstalled 
 ### -q --quiet : QUIET mode is Dangereous !
 
 Quiet mode allows you to update all you configure without any interaction. Just run the script and all is done. But ....
