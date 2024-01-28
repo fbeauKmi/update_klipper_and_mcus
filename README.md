@@ -40,7 +40,19 @@ git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git
 
 Copy and edit ``mcus.ini`` from examples folder to ``~/update_klipper_and_mcus`/``
 
-### Edit mcus.ini
+## Enable script update with Moonraker
+
+Paste the lines below in mooraker.conf
+```
+[update_manager update_klipper_and_mcus]
+type: git_repo
+primary_branch: main
+path: ~/update_klipper_and_mcus
+origin: https://github.com/fbeauKmi/update_klipper_and_mcus.git
+is_system_service: False
+```
+
+## Edit mcus.ini
 
 mcus.ini contains : 
 - sections : the name you give to your mcu between brackets (not necessarly the name in Klipper config)
