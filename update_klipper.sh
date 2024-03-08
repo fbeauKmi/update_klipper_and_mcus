@@ -22,7 +22,9 @@ mcu_order=()
 
 # Get Current script fullpath
 script_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-k_remote_version=$( git -C ~/klipper fetch -q && git -C ~/klipper describe "origin/$(git -C ~/klipper rev-parse --abbrev-ref HEAD)" --tags --always --long)
+k_branch=$(git -C ~/klipper rev-parse --abbrev-ref HEAD)
+k_fullbranch=$(git -C ~/klipper rev-parse --abbrev-ref --symbolic-full-name @{u})
+k_remote_version=$( git -C ~/klipper fetch -q && git -C ~/klipper describe "origin/$k_branch" --tags --always --long)
 k_local_version=$( git -C ~/klipper describe --tags --always --long --dirty)
 k_repo=$(git -C ~/klipper remote get-url origin)
 # Check if the Klipper service is running and save the result in "klipperrunning"
@@ -207,26 +209,26 @@ function main(){
       
       if [[ $k_local_version == $k_remote_version ]] ; then
           echo  "Klipper is already up to date"
-          echo "$k_repo"
+          echo "$k_repo $k_fullbranch"
           echo "$k_local_version"  
           echo  "Use this script with --firmware option to update MCUs anyway"
       else
         if [[ "$k_local_version" == *"dirty"* ]]; then
           echo "Your repo is dirty, try to solve this before update"
           echo "Conflict to solve : "
-          git status --short
+          git -C ~/klipper status --short
         else
           
           echo "$k_local_version -> $k_remote_version"
           echo "$(git -C ~/klipper shortlog HEAD..origin/master| grep -E '^[ ]+\w+' | wc -l) commit(s)  behind repo"
           if ! $CHECK ; then
-            echo  "Updating Klipper from $k_repo" 
+            echo  "Updating Klipper from $k_repo $k_fullbranch" 
             # Store previous version
             echo "$k_local_version" > $script_path/config/.previous_version           
             git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
             TOUPDATE=true
           else
-            echo  "Klipper can be updated from $k_repo"
+            echo  "Klipper can be updated from $k_repo $k_fullbranch"
             TOUPDATE=false
           fi
         fi
