@@ -56,13 +56,13 @@ function init_array(){
         fi
 
         # append command to string
-        if [ -n "${flash_actions[$section]}" ]; then
-            flash_actions[$section]="${flash_actions[$section]};$value"
+        if [ -n "${flash_actions["$section"]}" ]; then
+            flash_actions["$section"]="${flash_actions["$section"]};$value"
         else
-            flash_actions[$section]="$value"
+            flash_actions["$section"]="$value"
         fi
       fi
-    done < $filename
+    done < <(tr '\r' '\n' < "$filename")
     if [ ${#flash_actions[@]} == 0 ]; then
 	echo "No mcu in $filename"
 	exit 1
@@ -146,7 +146,7 @@ update_mcus () {
 
         if prompt "No errors? Press [Y] to flash $mcu" ; then
             # Split the flash command string into separate commands and run each one
-            IFS=";" read -ra commands <<< "${flash_actions[$mcu]}"
+            IFS=";" read -ra commands <<< "${flash_actions["$mcu"]}"
             for command in "${commands[@]}"; do
                  # Check if the command contains "make flash"
                 if [[ "$command" == *"make flash"* ]]; then
