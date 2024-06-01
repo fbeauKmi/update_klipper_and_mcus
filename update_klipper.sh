@@ -11,6 +11,7 @@ Optional args: <config_file> Specify the config file to use. Default is 'mcus.in
   -f, --firmware             Do not merge repo, update firmware only
   -r, --rollback             Rollback to previous installed version
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
+  -v, --verbose              For debug purpose, display parsed config
   -h, --help                 Display this help message and exit
 EOF
 }
@@ -35,6 +36,7 @@ function init_array(){
 
   filename=${CONFIG:-$script_path/mcus.ini}
   if [[ -f "$filename" ]]; then
+    file_content=$( tr '\r' '\n' < "$filename" )
 
     while IFS==: read -r key value; do
       if [[ $key == \[*] ]]; then
@@ -62,10 +64,19 @@ function init_array(){
             flash_actions["$section"]="$value"
         fi
       fi
-    done < <(tr '\r' '\n' < "$filename")
+    done <<< "$file_content"
+
+    if $VERBOSE; then
+      echo "MCU order: ${mcu_order[@]}"
+      for mcu in "${mcu_order[@]}"; do
+        echo "$mcu: ${flash_actions[$mcu]}"
+      done
+    fi
+
+
     if [ ${#flash_actions[@]} == 0 ]; then
-	echo "No mcu in $filename"
-	exit 1
+      echo "No mcu in $filename"
+      exit 1
     fi
     return 0
   fi
@@ -261,6 +272,7 @@ while [[ $# -gt 0 ]]; do
     -r|--rollback)  ROLLBACK=true;;
     -h|--help)     HELP=true  ;;
     -q|--quiet)    QUIET=true ;;
+    -v|--verbose)  VERBOSE=true ;;
     -*|--*)       HELP=true ;;
     *)
       CONFIG=$1
