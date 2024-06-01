@@ -98,7 +98,7 @@ show_version () {
   if [[ "$s_version" != "$s_remote"* ]] && ! $QUIET; then
     echo -e "new version available $s_remote"
   fi
-
+  return 0
 }
 
 # Define a function to update the firmware on the MCUs
@@ -159,7 +159,8 @@ update_mcus () {
         fi
     done
     # Prompt the user to power cycle the MCUs if necessary
-    echo -e "\e[1;34m! Some MCUs need power cycle to apply firmware. !\e[0m"
+    echo -e "\e[1;34m! Some MCUs may require a power cycle to apply firmware. !\e[0m"
+    return 0
 }
 
 # Define a function to start or stop the Klipper service
@@ -175,6 +176,7 @@ function klipperservice {
       echo -e "\e[1;31m ${1^} Klipper service\e[0m"
       sudo service klipper $1
     fi
+    return 0
 }
 
 # Define the main function
@@ -246,6 +248,7 @@ function main(){
       echo -e "\e[1;32mAll operations done ! Bye ! \e[0m"
       echo -e "\e[1;32mHappy bed engraving !\n\e[0m"
     fi
+    exit 0
 }
 
 HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false
