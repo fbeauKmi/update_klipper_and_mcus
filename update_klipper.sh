@@ -262,7 +262,7 @@ function main(){
     exit 0
 }
 
-HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false
+HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false; VERBOSE=false
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
