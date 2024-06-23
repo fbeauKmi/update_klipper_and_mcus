@@ -101,6 +101,38 @@ action_command : make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<B
 ```
 _source: Cannot remember_
 
+```
+[spider]
+# spider on serial port (rpi gpio)
+action_command: ~/update_klipper_and_mcus/bootloader_serial.py /dev/ttyAMA0 250000
+action_command: ~/katapult/scripts/flashtool.py -d /dev/ttyAMA0 -b 250000
+```
+_source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#building-the-micro-controller-code)_
+
+```
+[spider]
+# spider on serial port (rpi gpio) at 250000bps
+action_command: ~/update_klipper_and_mcus/bootloader_serial.py /dev/ttyAMA0 250000
+action_command: ~/katapult/scripts/flashtool.py -d /dev/ttyAMA0 -b 250000
+```
+_source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#physical-serial)_
+
+```
+[catalyst]
+# catalyst on usb-serial port (using bootloader_usb.py)
+action_command: ~/update_klipper_and_mcus/bootloader_usb.py /dev/serial/by-id/usb-Klipper_stm32f401xc_<board_serial>
+quiet_command: sleep 1
+action_command: ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f401xc_<board_serial> -b 250000
+```
+_source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#python-with-flash_usb)_
+
+```
+[catalyst]
+# catalyst on usb-serial port (using make flash)
+action_command: make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_stm32f401xc_<board_serial>
+```
+_source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#building-the-micro-controller-code)_
+
 ## Usage
 
 Run ``~/<script_folder>/update_klipper.sh`` in a terminal, you can use the following options.
