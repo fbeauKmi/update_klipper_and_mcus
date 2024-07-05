@@ -1,5 +1,5 @@
 #!/bin/bash
-# update_klipper_and_mcus (UKAM) is a bash fscript to simplify klipper firmware updates.
+# update_klipper_and_mcus (UKAM) is a bash script to simplify klipper firmware updates.
 #
 # Copyright (C) 2024 Frédéric Beaucamp
 #
