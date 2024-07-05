@@ -43,6 +43,11 @@ function init_array(){
         section=${key#[}
         section=${section%]}
         
+        # Check if section already exists
+        if [[ " ${mcu_order[@]} " =~ " ${section} " ]]; then
+          error_exit "Duplicate section [$section] found in $filename"
+        fi
+        
         # Store the order of MCUs in mcu_order array
         mcu_order+=("$section")
       elif [[ $key == flash_command || $key == quiet_command || $key == action_command ]]; then
@@ -75,13 +80,17 @@ function init_array(){
 
 
     if [ ${#flash_actions[@]} == 0 ]; then
-      echo "No mcu in $filename"
-      exit 1
+      error_exit "No mcu in $filename, check documentation"
     fi
     return 0
   fi
-  echo  "$filename does not exist, unable to update"
-  exit 1
+  error_exit  "$filename does not exist, unable to update"
+}
+
+# Error function Exit script
+function error_exit() {
+    echo -e "\e[1;31m!!Error: $1\e[0m" >&2
+    exit 1
 }
 
 # Define a function to prompt the user with a yes/no question and return their answer
@@ -140,8 +149,7 @@ update_mcus () {
         make clean $config_file_str
         if $QUIET ; then   
             if [ ! -f "$script_path/config/config.$mcu" ]; then
-                echo -e "\e[1;31m ${1^} No config file for $mcu, \nDon't use quiet mode first !\nFimware update \e[0m"
-                exit 0
+                error_exit "${1^} No config file for $mcu, \nDon't use quiet mode on first firmware update!"
             fi  
         else 
             make menuconfig $config_file_str 
