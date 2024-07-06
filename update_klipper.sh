@@ -1,5 +1,6 @@
 #!/bin/bash
-# update_klipper_and_mcus (UKAM) is a bash fscript to simplify klipper firmware updates.
+
+# update_klipper_and_mcus (UKAM) is a bash script to simplify klipper firmware updates.
 #
 # Copyright (C) 2024 Frédéric Beaucamp
 #
@@ -28,6 +29,8 @@ Optional args: <config_file> Specify the config file to use. Default is 'mcus.in
 EOF
 }
 
+# Exit on error
+set -e 
 # Define an associative arrays "flash_actions", "make_options" to hold flash commands for different MCUs
 declare -A flash_actions
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
@@ -103,6 +106,81 @@ function init_array(){
 function error_exit() {
     echo -e "\e[1;31m!!Error: $1\e[0m" >&2
     exit 1
+}
+
+# Function to enter bootloader mode
+# Usage  : enter_bootloader -t [type:usb|serial] -d [serial] -u [canbus_uuid] -b [baudrate]
+function enter_bootloader() {
+    local type=""
+    local serial=""
+    local baudrate=""
+
+    # Parse command-line options
+    while getopts ":t:d:b:u:" opt; do
+        case $opt in
+            u) type='can'; serial="$OPTARG" ;;
+            t) type=$(echo "$OPTARG" | tr '[:upper:]' '[:lower:]') ;;
+            d) serial="$OPTARG" ;;
+            b) baudrate="$OPTARG" ;;
+            \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
+            :) error_exit "Option -$OPTARG requires an argument. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
+        esac
+    done
+
+    # Check if required arguments are provided
+    if [[ -z "$type" ]]; then
+        error_exit "Type argument is missing. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate]"
+    fi
+
+    if [[ -z "$serial" ]]; then
+        error_exit "Serial argument is missing. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>"
+    fi
+
+    venv=$(find_klipper_venv)
+
+    case "$type" in
+        usb)
+            cd ~/klipper/scripts
+            $venv/bin/python3 -c "import flash_usb as u; u.enter_bootloader('$serial')"
+            sleep 2
+            ;;
+        serial)
+            echo "Entering serial bootloader mode for $serial"
+            baudrate=${baudrate:-250000}
+            $venv/bin/python3 -c "
+import sys, serial
+try:
+    with serial.Serial('$serial', int($baudrate), timeout=1) as ser:
+        ser.write(b'~ \x1c Request Serial Bootloader!! ~')
+except serial.SerialException as e:
+    print(f'Error: {e}', file=sys.stderr)
+    sys.exit(1)
+"
+            sleep 2
+            ;;
+        can)
+            echo "Entering CAN bootloader mode for $serial"
+            if [[ -f ~/katapult/scripts/flashtool.py ]]; then
+              ~/katapult/scripts/flashtool.py -r -u $serial
+              sleep 2
+            else
+              error_exit "flashtool.py not found"
+            fi
+            ;;
+        *)
+            error_exit "Unknown bootloader type: $type"
+            ;;
+    esac
+}
+
+# Check if Klipper venv exists
+function find_klipper_venv() {
+    local venv_dir="$HOME/klippy-env"
+    if [ -d "$venv_dir" ]; then
+        echo "$venv_dir"
+    else
+        error_exit "Klipper virtual environment not found at $venv_dir"
+    fi
 }
 
 # Define a function to prompt the user with a yes/no question and return their answer
@@ -184,8 +262,13 @@ update_mcus () {
                     # Add KCONFIG_CONFIG=config/$mcu after "make flash"
                     command="${command/make\ flash/make\ flash\ $config_file_str}"
                 fi
-                echo "Command: $command"
-                eval "$command"
+                if [[ "$command" =~ [[:space:]]*enter_bootloader ]]; then
+                    # Execute enter_bootloader directly
+                    $command
+                else
+                    echo "Command: $command"
+                    eval "$command"
+                fi
             done
         fi
     done
