@@ -17,12 +17,12 @@ usage() {
   cat << EOF
 Usage: $0 [<mcus.ini>] [-h]
 
-Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
+UKAM : a Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
   -c, --checkonly            Check if Klipper is up to date only.
   -f, --firmware             Do not merge repo, update firmware only
-  -r, --rollback             Rollback to previous installed version
+  -r, --rollback             Rollback to previous installed version (Only if UKAM was used)
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -v, --verbose              For debug purpose, display parsed config
   -h, --help                 Display this help message and exit
@@ -38,11 +38,21 @@ mcu_order=()
 
 # Get Current script fullpath
 script_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#init usefull informations
+k_branch=""
+k_fullbranch=""
+k_remote_version=""
+k_local_version=""
+k_repo=""
+
+#Load klipper repo informations
+function get_klipper_vars(){
 k_branch=$(git -C ~/klipper rev-parse --abbrev-ref HEAD)
 k_fullbranch=$(git -C ~/klipper rev-parse --abbrev-ref --symbolic-full-name @{u})
 k_remote_version=$( git -C ~/klipper fetch -q && git -C ~/klipper describe "origin/$k_branch" --tags --always --long)
 k_local_version=$( git -C ~/klipper describe --tags --always --long --dirty)
 k_repo=$(git -C ~/klipper remote get-url origin)
+}
 # Check if the Klipper service is running and save the result in "klipperrunning"
 klipperrunning=$(systemctl is-active klipper >/dev/null 2>&1 && echo true || echo false)
 
@@ -109,7 +119,7 @@ function error_exit() {
 }
 
 # Function to enter bootloader mode
-# Usage  : enter_bootloader -t [type:usb|serial] -d [serial] -u [canbus_uuid] -b [baudrate]
+# Usage  : enter_bootloader -t [type:usb|serial|can] -d [serial] -u [canbus_uuid] -b [baudrate]
 function enter_bootloader() {
     local type=""
     local serial=""
@@ -122,7 +132,7 @@ function enter_bootloader() {
             t) type=$(echo "$OPTARG" | tr '[:upper:]' '[:lower:]') ;;
             d) serial="$OPTARG" ;;
             b) baudrate="$OPTARG" ;;
-            \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
+            \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t <usb|serial|can> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
             :) error_exit "Option -$OPTARG requires an argument. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
         esac
     done
@@ -203,10 +213,10 @@ show_version () {
   s_version=$(git describe --always --tags --long --dirty 2>/dev/null)
   s_remote=$(git describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
   if [[ $s_version != "" ]] ; then
-    echo -e "updater $s_version"
+    echo -e "  current version $s_version"
   fi
   if [[ "$s_version" != "$s_remote"* ]] && ! $QUIET; then
-    echo -e "new version available $s_remote"
+    echo -e "  new version available $s_remote"
   fi
   return 0
 }
@@ -293,22 +303,34 @@ function klipperservice {
     return 0
 }
 
-# Define the main function
-function main(){
-    echo -e "\e[1;35m----------------------------"
-    echo "|  Update Klipper & Mcus   |"
-    echo -e "----------------------------"
+function splash(){
+    echo -e "\e[1;35m"
+    echo "   ++————————————————————————————————++ "
+    echo "  ||    _   _ _   __  ___  ___  ___   ||"
+    echo "  ||   | | | | | / / / _ \ |  \/  |   ||"
+    echo "  ||   | | | | |/ / / /_\ \| .  . |   ||"
+    echo "  ||   | | | |    \ |  _  || |\/| |   ||"
+    echo "  ||   | |_| | |\  \| | | || |  | |   ||"
+    echo "  ||    \___/\_| \_/\_| |_/\_|  |_/   ||"
+    echo "  ||                                  ||"
+    echo "  ++ — Update — Klipper — & — Mcus —— ++"
+    echo "   ++————————————————————————————————++ "
+    echo ""
     show_version
     echo -e "\e[0m"
+}
 
+# Define the main function
+function main(){
+    
     init_array
 
     # Check for updates from the Git repository and prompt the user whether to update the MCUs
-    if $FIRMWAREONLY ; then : ; else 
+    if ! $FIRMWAREONLY ; then : 
       if  $ROLLBACK ; then
 	        k_previous_version=$(cat $script_path/config/.previous_version)
           if [[ $k_previous_version == $k_local_version ]]; then
-		        echo "Nothing to rollback"
+		        echo -e "Nothing to rollback"
           else
             echo "Current version Klipper $k_local_version"
             if [[ "$k_local_version" == *"dirty"* ]]; then
@@ -359,8 +381,8 @@ function main(){
       fi
     fi
     if ! $CHECK; then
-      echo -e "\e[1;32mAll operations done ! Bye ! \e[0m"
-      echo -e "\e[1;32mHappy bed engraving !\n\e[0m"
+      echo -e "\n    \e[1;32mAll operations done ! Bye !"
+      echo -e "       Happy bed engraving !\n\e[0m"
     fi
     exit 0
 }
@@ -389,4 +411,6 @@ if [[ $HELP == true ]]; then
   exit 0
 fi
 
+splash
+get_klipper_vars
 main
