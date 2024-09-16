@@ -44,6 +44,8 @@ k_fullbranch=""
 k_remote_version=""
 k_local_version=""
 k_repo=""
+rollback_repo=""
+rollback_version=""
 
 #Load klipper repo informations
 function get_klipper_vars(){
@@ -111,6 +113,24 @@ function init_array(){
   fi
   error_exit  "$filename does not exist, unable to update"
 }
+
+function get_rollback {
+    count=0
+    filename="$1"
+    if [[ -f "$filename" ]]; then
+      while IFS= read -r value || [[ -n "$value" ]]; do
+           if [ $count -eq 0 ]; then
+               rollback_version="$value"   
+           elif [ $count -eq 1 ]; then
+               rollback_repo="$value"
+               break
+           fi
+           count=$(($count + 1))
+       done < "$filename"
+    fi
+    return 0
+}
+
 
 # Error function Exit script
 function error_exit() {
@@ -205,6 +225,8 @@ prompt () {
         esac
     done
 }
+
+
 
 # Display versions
 show_version () {
@@ -315,7 +337,6 @@ function splash(){
     echo "  ||                                  ||"
     echo "  ++ — Update — Klipper — & — Mcus —— ++"
     echo "   ++————————————————————————————————++ "
-    echo ""
     show_version
     echo -e "\e[0m"
 }
@@ -326,18 +347,53 @@ function main(){
     init_array
 
     # Check for updates from the Git repository and prompt the user whether to update the MCUs
-    if ! $FIRMWAREONLY ; then : 
+    if ! $FIRMWAREONLY ; then :
+      echo -e "\e[1;34m Available rollback version\e[0m"
+      get_rollback $script_path/config/.previous_version
+
+      if [[ $rollback_version != "" && $rollback_version != $k_local_version ]] ; then
+        if [[ $rollback_repo == "" || $rollback_repo == "$k_repo $k_fullbranch" ]] ; then
+            echo "   $rollback_version <- $k_local_version"
+            DO_ROLLBACK=true
+        else
+            echo "   rollback version $rollback_version belong to another repository or branch"
+            echo "   $rollback_repo"
+        fi
+      fi
+      if ! $DO_ROLLBACK ; then
+        echo "   No rollback available"
+      fi
+
       if  $ROLLBACK ; then
-	        k_previous_version=$(cat $script_path/config/.previous_version)
-          if [[ $k_previous_version == $k_local_version ]]; then
-		        echo -e "Nothing to rollback"
-          else
+          if ! $DO_ROLLBACK ; then 
+            if [[ $rollback_version == $k_local_version ]]; then
+              echo "Rollback = Current version, Nothing to rollback."
+            else 
+		          echo "Unable to rollback"
+            fi
+            if prompt "Do you want to define the number of commit you want to rollback ?"; then
+              read -p $'\e[35m'"Number of commit to rollback: "$'\e[0m' nb_rollback
+              while [[ ! "$nb_rollback" =~ ^[0-9]+$ ]] ; do
+                  read -p $'\e[35m'"Answer should be an integer or [A] to abort. Number of commit to rollback: "$'\e[0m' nb_rollback
+                  if [[ "${nb_rollback^^}" == "A" ]] ; then
+                    echo "Rollback aborted"
+                    exit 1
+                  fi
+              done
+              rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback --tags --always --long)
+              DO_ROLLBACK=true
+            else
+              echo "Rollback aborted"
+              exit 1
+            fi
+          fi
+          if $DO_ROLLBACK ; then
             echo "Current version Klipper $k_local_version"
             if [[ "$k_local_version" == *"dirty"* ]]; then
                echo "WARNING : Rollback a dirty repo will erase untracked files" 
             fi
-            if prompt "Rollback to $k_previous_version ?"; then
-               git -C ~/klipper reset --hard $k_previous_version
+            if prompt "Rollback to $rollback_version ?"; then
+               git -C ~/klipper reset --hard $rollback_version
                TOUPDATE=true
             fi
           fi
@@ -362,7 +418,8 @@ function main(){
           if ! $CHECK ; then
             echo  "Updating Klipper from $k_repo $k_fullbranch" 
             # Store previous version
-            echo "$k_local_version" > $script_path/config/.previous_version           
+            echo -e "$k_local_version\n$k_repo $k_fullbranch" > $script_path/config/.previous_version
+
             git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
             TOUPDATE=true
           else
@@ -387,7 +444,7 @@ function main(){
     exit 0
 }
 
-HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false; VERBOSE=false
+HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false; VERBOSE=false; DO_ROLLBACK=false
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
