@@ -13,227 +13,23 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see http://www.gnu.org/licenses/.
 
-usage() {
-  cat << EOF
-Usage: $0 [<mcus.ini>] [-h]
-
-UKAM : a Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
-
-Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
-  -c, --checkonly            Check if Klipper is up to date only.
-  -f, --firmware             Do not merge repo, update firmware only
-  -r, --rollback             Rollback to previous installed version (Only if UKAM was used)
-  -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
-  -v, --verbose              For debug purpose, display parsed config
-  -h, --help                 Display this help message and exit
-EOF
-}
-
 # Exit on error
 set -e 
-# Define an associative arrays "flash_actions", "make_options" to hold flash commands for different MCUs
-declare -A flash_actions
-# Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
-mcu_order=()
-
 # Get Current script fullpath
 script_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-#init usefull informations
-k_branch=""
-k_fullbranch=""
-k_remote_version=""
-k_local_version=""
-k_repo=""
-rollback_repo=""
-rollback_version=""
 
-#Load klipper repo informations
-function get_klipper_vars(){
-k_branch=$(git -C ~/klipper rev-parse --abbrev-ref HEAD)
-k_fullbranch=$(git -C ~/klipper rev-parse --abbrev-ref --symbolic-full-name @{u})
-k_remote_version=$( git -C ~/klipper fetch -q && git -C ~/klipper describe "origin/$k_branch" --tags --always --long)
-k_local_version=$( git -C ~/klipper describe --tags --always --long --dirty)
-k_repo=$(git -C ~/klipper remote get-url origin)
-}
-# Check if the Klipper service is running and save the result in "klipperrunning"
-klipperrunning=$(systemctl is-active klipper >/dev/null 2>&1 && echo true || echo false)
-
-# Define a function to initialize the flash_actions array from the config file
-function init_array(){
-
-  filename=${CONFIG:-$script_path/mcus.ini}
-  if [[ -f "$filename" ]]; then
-    file_content=$( tr '\r' '\n' < "$filename" )
-
-    while IFS==: read -r key value; do
-      if [[ $key == \[*] ]]; then
-        section=${key#[}
-        section=${section%]}
-        
-        # Check if section already exists
-        if [[ " ${mcu_order[@]} " =~ " ${section} " ]]; then
-          error_exit "Duplicate section [$section] found in $filename"
-        fi
-        
-        # Store the order of MCUs in mcu_order array
-        mcu_order+=("$section")
-      elif [[ $key == flash_command || $key == quiet_command || $key == action_command ]]; then
-        
-        # Warn deprecated config
-        if [[ $key == flash_command ]]; then
-          echo -e "\e[1;31m flash_command is DEPRECATED, will be removed soon, use action_command or quiet_command instead \e[0m"
-        fi
-        
-        # Make command quiet, except for stderr, when needed
-        if [[ $key == quiet_command ]] && $QUIET ; then
-          value="$value >/dev/null"
-        fi
-
-        # append command to string
-        if [ -n "${flash_actions["$section"]}" ]; then
-            flash_actions["$section"]="${flash_actions["$section"]};$value"
-        else
-            flash_actions["$section"]="$value"
-        fi
-      fi
-    done <<< "$file_content"
-
-    if $VERBOSE; then
-      echo "MCU order: ${mcu_order[@]}"
-      for mcu in "${mcu_order[@]}"; do
-        echo "$mcu: ${flash_actions[$mcu]}"
-      done
-    fi
-
-
-    if [ ${#flash_actions[@]} == 0 ]; then
-      error_exit "No mcu in $filename, check documentation"
-    fi
-    return 0
-  fi
-  error_exit  "$filename does not exist, unable to update"
-}
-
-function get_rollback {
-    count=0
-    filename="$1"
-    if [[ -f "$filename" ]]; then
-      while IFS= read -r value || [[ -n "$value" ]]; do
-           if [ $count -eq 0 ]; then
-               rollback_version="$value"   
-           elif [ $count -eq 1 ]; then
-               rollback_repo="$value"
-               break
-           fi
-           count=$(($count + 1))
-       done < "$filename"
-    fi
-    return 0
-}
-
-
-# Error function Exit script
-function error_exit() {
-    echo -e "\e[1;31m!!Error: $1\e[0m" >&2
-    exit 1
-}
-
-# Function to enter bootloader mode
-# Usage  : enter_bootloader -t [type:usb|serial|can] -d [serial] -u [canbus_uuid] -b [baudrate]
-function enter_bootloader() {
-    local type=""
-    local serial=""
-    local baudrate=""
-
-    # Parse command-line options
-    while getopts ":t:d:b:u:" opt; do
-        case $opt in
-            u) type='can'; serial="$OPTARG" ;;
-            t) type=$(echo "$OPTARG" | tr '[:upper:]' '[:lower:]') ;;
-            d) serial="$OPTARG" ;;
-            b) baudrate="$OPTARG" ;;
-            \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t <usb|serial|can> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
-            :) error_exit "Option -$OPTARG requires an argument. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
-        esac
-    done
-
-    # Check if required arguments are provided
-    if [[ -z "$type" ]]; then
-        error_exit "Type argument is missing. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate]"
-    fi
-
-    if [[ -z "$serial" ]]; then
-        error_exit "Serial argument is missing. Usage: enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>"
-    fi
-
-    venv=$(find_klipper_venv)
-
-    case "$type" in
-        usb)
-            cd ~/klipper/scripts
-            $venv/bin/python3 -c "import flash_usb as u; u.enter_bootloader('$serial')"
-            sleep 2
-            ;;
-        serial)
-            echo "Entering serial bootloader mode for $serial"
-            baudrate=${baudrate:-250000}
-            $venv/bin/python3 -c "
-import sys, serial
-try:
-    with serial.Serial('$serial', int($baudrate), timeout=1) as ser:
-        ser.write(b'~ \x1c Request Serial Bootloader!! ~')
-except serial.SerialException as e:
-    print(f'Error: {e}', file=sys.stderr)
-    sys.exit(1)
-"
-            sleep 2
-            ;;
-        can)
-            echo "Entering CAN bootloader mode for $serial"
-            if [[ -f ~/katapult/scripts/flashtool.py ]]; then
-              ~/katapult/scripts/flashtool.py -r -u $serial
-              sleep 2
-            else
-              error_exit "flashtool.py not found"
-            fi
-            ;;
-        *)
-            error_exit "Unknown bootloader type: $type"
-            ;;
-    esac
-}
-
-# Check if Klipper venv exists
-function find_klipper_venv() {
-    local venv_dir="$HOME/klippy-env"
-    if [ -d "$venv_dir" ]; then
-        echo "$venv_dir"
-    else
-        error_exit "Klipper virtual environment not found at $venv_dir"
-    fi
-}
-
-# Define a function to prompt the user with a yes/no question and return their answer
-prompt () {
-    if $QUIET ; then return 0 ; fi
-    while true; do
-        read -p $'\e[35m'"$* [Y/n]: "$'\e[0m' yn
-        case $yn in
-            [Yy]*) return 0  ;;
-            "")    return 0  ;;  # Return 0 on Enter key press (Y as default)
-            [Nn]*) return 1  ;;
-        esac
-    done
-}
-
-
+#Load functions
+source "$script_path/scripts/utils.sh"
+source "$script_path/scripts/mcus.sh"
+source "$script_path/scripts/klipper.sh"
+source "$script_path/scripts/rollback.sh"
+source "$script_path/scripts/moonraker.sh"
 
 # Display versions
-show_version () {
-  cd $script_path
-  git fetch -q
-  s_version=$(git describe --always --tags --long --dirty 2>/dev/null)
-  s_remote=$(git describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
+ukam_version () {
+  git -C $script_path fetch -q
+  s_version=$(git -C $script_path describe --always --tags --long --dirty 2>/dev/null)
+  s_remote=$(git -C $script_path describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
   if [[ $s_version != "" ]] ; then
     echo -e "  current version $s_version"
   fi
@@ -243,90 +39,8 @@ show_version () {
   return 0
 }
 
-# Define a function to update the firmware on the MCUs
-update_mcus () {
-    # Loop over the keys (MCUs) in the flash_actions array
-    for mcu in "${mcu_order[@]}"
-    do
-        # Prompt the user whether to update this MCU
-        if prompt "Update $mcu ?" ; then
-            :
-        else
-            continue
-        fi
-        # Check if the config folder exists
-        if [ ! -d "$script_path/config" ]; then
-            # If it doesn't exist, create it
-            mkdir -p "$script_path/config"
-            echo "Config folder created at: $script_path/config"
-        fi
-        
-        # Set config_file in the scripts directory 
-        config_file_str="KCONFIG_CONFIG=$script_path/config/config.$mcu"
-        
-        # Change to the Klipper directory
-        cd ~/klipper
-
-        # Clean the previous build and configure for the selected MCU
-        make clean $config_file_str
-        if $QUIET ; then   
-            if [ ! -f "$script_path/config/config.$mcu" ]; then
-                error_exit "${1^} No config file for $mcu, \nDon't use quiet mode on first firmware update!"
-            fi  
-        else 
-            make menuconfig $config_file_str 
-        fi
-        
-        # Check CPU thread number (added by @roguyt to build faster)
-        CPUS=`grep -c ^processor /proc/cpuinfo`
-	if $QUIET ; then
-	    make -j $CPUS $config_file_str &> /dev/null
-	else
-	    make -j $CPUS $config_file_str
-	fi
-
-        if prompt "No errors? Press [Y] to flash $mcu" ; then
-            # Split the flash command string into separate commands and run each one
-            IFS=";" read -ra commands <<< "${flash_actions["$mcu"]}"
-            for command in "${commands[@]}"; do
-                 # Check if the command contains "make flash"
-                if [[ "$command" == *"make flash"* ]]; then
-                    # Add KCONFIG_CONFIG=config/$mcu after "make flash"
-                    command="${command/make\ flash/make\ flash\ $config_file_str}"
-                fi
-                if [[ "$command" =~ [[:space:]]*enter_bootloader ]]; then
-                    # Execute enter_bootloader directly
-                    $command
-                else
-                    echo "Command: $command"
-                    eval "$command"
-                fi
-            done
-        fi
-    done
-    # Prompt the user to power cycle the MCUs if necessary
-    echo -e "\e[1;34m! Some MCUs may require a power cycle to apply firmware. !\e[0m"
-    return 0
-}
-
-# Define a function to start or stop the Klipper service
-function klipperservice {
-    if ($klipperrunning) || [[ "$1" = "start" ]] ; then
-      if ! $klipperrunning ; then
-        if prompt "Start Klipper service ?" ; then
-          :
-        else
-          return 0
-        fi
-      fi 
-      echo -e "\e[1;31m ${1^} Klipper service\e[0m"
-      sudo service klipper $1
-    fi
-    return 0
-}
-
 function splash(){
-    echo -e "\e[1;35m"
+    echo -e "${LIGHT_MAGENTA}"
     echo "   ++————————————————————————————————++ "
     echo "  ||    _   _ _   __  ___  ___  ___   ||"
     echo "  ||   | | | | | / / / _ \ |  \/  |   ||"
@@ -337,125 +51,55 @@ function splash(){
     echo "  ||                                  ||"
     echo "  ++ — Update — Klipper — & — Mcus —— ++"
     echo "   ++————————————————————————————————++ "
-    show_version
-    echo -e "\e[0m"
+    ukam_version
 }
 
 # Define the main function
 function main(){
     
-    init_array
+    get_klipper_vars
+    load_mcus_config
 
     # Check for updates from the Git repository and prompt the user whether to update the MCUs
     if ! $FIRMWAREONLY ; then :
-      echo -e "\e[1;34m Available rollback version\e[0m"
-      get_rollback $script_path/config/.previous_version
-
-      if [[ $rollback_version != "" && $rollback_version != $k_local_version ]] ; then
-        if [[ $rollback_repo == "" || $rollback_repo == "$k_repo $k_fullbranch" ]] ; then
-            echo "   $rollback_version <- $k_local_version"
-            DO_ROLLBACK=true
-        else
-            echo "   rollback version $rollback_version belong to another repository or branch"
-            echo "   $rollback_repo"
-        fi
-      fi
-      if ! $DO_ROLLBACK ; then
-        echo "   No rollback available"
-      fi
-
       if  $ROLLBACK ; then
-          if ! $DO_ROLLBACK ; then 
-            if [[ $rollback_version == $k_local_version ]]; then
-              echo "Rollback = Current version, Nothing to rollback."
-            else 
-		          echo "Unable to rollback"
-            fi
-            if prompt "Do you want to define the number of commit you want to rollback ?"; then
-              read -p $'\e[35m'"Number of commit to rollback: "$'\e[0m' nb_rollback
-              while [[ ! "$nb_rollback" =~ ^[0-9]+$ ]] ; do
-                  read -p $'\e[35m'"Answer should be an integer or [A] to abort. Number of commit to rollback: "$'\e[0m' nb_rollback
-                  if [[ "${nb_rollback^^}" == "A" ]] ; then
-                    echo "Rollback aborted"
-                    exit 1
-                  fi
-              done
-              rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback --tags --always --long)
-              DO_ROLLBACK=true
-            else
-              echo "Rollback aborted"
-              exit 1
-            fi
-          fi
-          if $DO_ROLLBACK ; then
-            echo "Current version Klipper $k_local_version"
-            if [[ "$k_local_version" == *"dirty"* ]]; then
-               echo "WARNING : Rollback a dirty repo will erase untracked files" 
-            fi
-            if prompt "Rollback to $rollback_version ?"; then
-               git -C ~/klipper reset --hard $rollback_version
-               TOUPDATE=true
-            fi
-          fi
+        echo -e "\n${BLUE}-- Rollback Klipper updates --${DEFAULT}"
+        show_rollback
+        do_rollback
       else
- 
-      echo -e "\e[1;34m Check for Klipper updates\e[0m" 
-      
-      if [[ $k_local_version == $k_remote_version ]] ; then
-          echo  "Klipper is already up to date"
-          echo "$k_repo $k_fullbranch"
-          echo "$k_local_version"  
-          echo  "Use this script with --firmware option to update MCUs anyway"
-      else
-        if [[ "$k_local_version" == *"dirty"* ]]; then
-          echo "Your repo is dirty, try to solve this before update"
-          echo "Conflict to solve : "
-          git -C ~/klipper status --short
-        else
-          
-          echo "$k_local_version -> $k_remote_version"
-          echo "$(git -C ~/klipper shortlog HEAD..origin/master| grep -E '^[ ]+\w+' | wc -l) commit(s)  behind repo"
-          if ! $CHECK ; then
-            echo  "Updating Klipper from $k_repo $k_fullbranch" 
-            # Store previous version
-            echo -e "$k_local_version\n$k_repo $k_fullbranch" > $script_path/config/.previous_version
-
-            git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
-            TOUPDATE=true
-          else
-            echo  "Klipper can be updated from $k_repo $k_fullbranch"
-            TOUPDATE=false
-          fi
-        fi
-      fi
+        echo -e "\n${BLUE}-- Check and apply Klipper updates --${DEFAULT}" 
+        update_klipper
       fi
     fi
+    
     if $TOUPDATE ; then
-      if prompt "Do you want to update mcus now?"; then
-        klipperservice stop # stop the Klipper service
-        update_mcus # call the update_mcus function
-        klipperservice start # start the Klipper service
-      fi
+      echo -e "\n${BLUE}-- Update Mcus --${DEFAULT}" 
+      get_mcus_version
+      update_mcus # call the update_mcus function
+      klipperservice start # start the Klipper service
     fi
-    if ! $CHECK; then
-      echo -e "\n    \e[1;32mAll operations done ! Bye !"
-      echo -e "       Happy bed engraving !\n\e[0m"
-    fi
+    echo -e "\n    ${GREEN}All operations done ! Bye !"
+    echo -e "       Happy bed engraving !\n${DEFAULT}"
+    
     exit 0
 }
 
-HELP=false; CHECK=false; FIRMWAREONLY=false; QUIET=false; TOUPDATE=false; ROLLBACK=false; VERBOSE=false; DO_ROLLBACK=false
+CHECK=false; DO_ROLLBACK=false; FIRMWAREONLY=false; HELP=false
+MENUCONFIG=false; QUIET=false; ROLLBACK=false; TOUPDATE=true
+VERBOSE=false
+
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -c|--checkonly)    CHECK=true;;
-    -f|--firmware) FIRMWAREONLY=true; TOUPDATE=true ;;
-    -r|--rollback)  ROLLBACK=true;;
-    -h|--help)     HELP=true  ;;
-    -q|--quiet)    QUIET=true ;;
-    -v|--verbose)  VERBOSE=true ;;
-    -*|--*)       HELP=true ;;
+    -c|--checkonly)  CHECK=true; TOUPDATE=false ;;
+    -f|--firmware)   FIRMWAREONLY=true ;;
+    -h|--help)       HELP=true ;;
+    -m|--menuconfig) MENUCONFIG=true ;;
+    -q|--quiet)      QUIET=true ;;
+    -r|--rollback)   ROLLBACK=true ;;
+    -v|--verbose)    VERBOSE=true ;;
+    -*|--*)          HELP=true ;;
     *)
       CONFIG=$1
      esac
@@ -469,5 +113,4 @@ if [[ $HELP == true ]]; then
 fi
 
 splash
-get_klipper_vars
 main

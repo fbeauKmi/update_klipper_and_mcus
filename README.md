@@ -108,6 +108,9 @@ Check if Klipper is up-to-date, if not, it displays latest commits.
 Skip Klipper update to repo or force Mcus update if Klipper is already up to date 
 ### -r --rollback
 Rollback to the previous version saved by this script. It proceed a hard reset if the repo is dirty, untracked files will be erased, plugins will need to be reinstalled 
+
+>[!NOTE] NEW : You can now go back to any commit if the saved value doesn't suit you.
+
 ### -q --quiet : QUIET mode is Dangereous !
 
 Quiet mode allows you to update all you configure without any interaction. Just run the script and all is done. But ....
@@ -117,9 +120,11 @@ Quiet mode allows you to update all you configure without any interaction. Just 
 ## Edit mcus.ini
 
 ``mcus.ini`` contains : 
-- sections : the name you give to your mcu between brackets (not necessarly the name in Klipper config)
+- sections : the name you give to your mcu between brackets \[\] (not necessarly the name in Klipper config)
+- ``klipper_section`` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
 - ``action_command`` : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by ``;`` or use several action_command in a section, they are executed in order of appearance.
-- ``quiet_command`` : same as action_command but without stdout in QUIET mode 
+- ``quiet_command`` : same as action_command but without stdout in QUIET mode
+
 
 The flash command depends on you mcus and the way you choose to flash your board : dfu-util, make flash, flashtool, flash_sdcard, mount/cp/umount ... refer to your board documentation to choose the right command
 
@@ -138,6 +143,7 @@ The flash command depends on you mcus and the way you choose to flash your board
 ```
 # For Rpi
 [RaspberryPi]
+klipper_section: mcu rpi
 action_command: make flash
 ```
 _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#building-the-micro-controller-code)_
@@ -150,7 +156,7 @@ _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#build
 # A list of available values can be found here :
 # https://github.com/Klipper3d/klipper/blob/master/scripts/spi_flash/board_defs.py
 
-[octopus_uart]
+[mcu]
 flash_command: ./scripts/flash-sdcard.sh /dev/ttyAMA0 btt-octopus-f446-v1
 ```
 _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
@@ -158,6 +164,7 @@ _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
 ```
 # For mainboard using bootloader_serial helper 
 [spider]
+klipper_section: mcu
 # spider on serial port (rpi gpio)
 action_command: ~/ukam/bootloader_serial.py /dev/ttyAMA0 250000
 action_command: ~/katapult/scripts/flashtool.py -d /dev/ttyAMA0 -b 250000
@@ -170,11 +177,13 @@ _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#physical
 # For a MCU in USB to Can bridge using Katapult as bootloader
 # You have to insert your Canbus_uuid and Usb serial below
 [octopus_usb2can]
+klipper_section: mcu
 quiet_command: python3 ~/katapult/scripts/flashtool.py -i can0 -r -u <YOUR_CANBUS_UUID>; sleep 2
 action_command: python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
 
 # using enter_bootoader function
 [octopus_usb2can]
+klipper_section: mcu
 quiet_command: enter_bootloader -u <YOUR_CANBUS_UUID>
 action_command: python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
 ```
@@ -185,14 +194,17 @@ _source : [Roguyt_prepare_command branch ^^](../roguyt_prepare_command/mcus.ini)
 ```
 # For Pico RP2040
 [pico]
+klipper_section: mcu nevermore
 #  No boot loader, need to manually enter in boot mode
 action_command : sudo mount /dev/sda1 /mnt ; sudo cp out/klipper.uf2 /mnt ; sudo umount /mnt
 
 [pico_bootloader]
+klipper_section: mcu
 # With katapult as bootloader
 action_command : make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
 
 [pico_bootloader]
+klipper_section: mcu
 # With katapult as bootloader
 quiet_command : enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
 action_command : ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
@@ -204,6 +216,7 @@ _source: Cannot remember_
 
 ```
 [catalyst]
+klipper_section: mcu
 # catalyst on usb-serial port (using bootloader_usb.py)
 action_command: ~/ukam/bootloader_usb.py /dev/serial/by-id/usb-Klipper_stm32f401xc_<board_serial>
 quiet_command: sleep 1
@@ -213,6 +226,7 @@ _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#python-w
 
 ```
 [catalyst]
+klipper_section: mcu
 # catalyst on usb-serial port (using make flash)
 action_command: make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_stm32f401xc_<board_serial>
 ```
@@ -222,13 +236,20 @@ _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#build
 
 ```
 [toolhead]
+klipper_section: mcu ebb36
 action_command: ~/katapult/scripts/flashtool.py -u <canbus_uuid>
 ```
-
-
 
 
 ## TODO
 not to much, the script works. If you have any suggestions feel free to contact me on Voron discord @fboc
 ## Aknowledgments
+
+This script would be nothing without the development of [Klipper](https://github.com/Klipper3d/klipper),
+[Moonraker](https://github.com/Arksine/moonraker) and [Katapult](https://github.com/Arksine/katapult). 
+Many thanks to all contributors to these projects.
+
+Thanks to OldGuyMeltPlastic and the Voron community who inspires the early version of this tool ([Video from OGMP](https://youtu.be/K-luKltYgpU) and 
+[Voron documentation](https://docs.vorondesign.com/community/howto/drachenkatze/automating_klipper_mcu_updates.html))
+
 Thanks to the Voron french community for supporting/tolerating me everyday ^^.
