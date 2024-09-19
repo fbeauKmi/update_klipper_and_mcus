@@ -52,12 +52,12 @@ service klipper start
 ## Installation
 
 >[!IMPORTANT] 
->If you use a previous version of this script, copy the configuration files from ``~/klipper/`` to ``~/<script_folder>/config/``
+>If you use a previous version of this script, copy the configuration files from `~/klipper/` to `~/<script_folder>/config/`
 
 ### Method 1 :
-Copy ``ukam.sh`` and ``mcus.ini`` in a folder of your pi, ``~/ukam/`` sounds as a good choice. Let's call this folder ``~/<script_folder>`` in this Readme.
+Copy `ukam.sh`, `/scripts/*.sh` and `mcus.ini` in a folder of your pi, `~/ukam/` sounds as a good choice. Let's call this folder `~/<script_folder>` in this Readme.
 
-Ensure to make ``ukam.sh`` executable : 
+Ensure to make `ukam.sh` executable : 
 ```
 chmod +x ~/<script_folder>/update_klipper.sh
 ```
@@ -71,7 +71,7 @@ cd ~
 git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git ukam
 ```
 
-Copy and edit ``mcus.ini`` from examples folder to ``~/ukam/``
+Copy and edit `mcus.ini` from examples folder to `~/ukam/`
 
 ## Update UKAM with Moonraker
 
@@ -86,7 +86,7 @@ is_system_service: False
 ```
 ## Usage
 
-Run ``~/<script_folder>/ukam.sh`` in a terminal, you can use the following options.
+Run `~/<script_folder>/ukam.sh` in a terminal, you can use the following options.
 
 ### -h --help : to see usage
 
@@ -109,7 +109,8 @@ Skip Klipper update to repo or force Mcus update if Klipper is already up to dat
 ### -r --rollback
 Rollback to the previous version saved by this script. It proceed a hard reset if the repo is dirty, untracked files will be erased, plugins will need to be reinstalled 
 
->[!NOTE] NEW : You can now go back to any commit if the saved value doesn't suit you.
+>[!NOTE] 
+> NEW : You can now go back to any commit if the saved value doesn't suit you.
 
 ### -q --quiet : QUIET mode is Dangereous !
 
@@ -119,16 +120,17 @@ Quiet mode allows you to update all you configure without any interaction. Just 
 
 ## Edit mcus.ini
 
-``mcus.ini`` contains : 
+`mcus.ini` contains : 
 - sections : the name you give to your mcu between brackets \[\] (not necessarly the name in Klipper config)
-- ``klipper_section`` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
-- ``action_command`` : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by ``;`` or use several action_command in a section, they are executed in order of appearance.
-- ``quiet_command`` : same as action_command but without stdout in QUIET mode
+- `klipper_section` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
+- `action_command` : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by `;` or use several action_command in a section, they are executed in order of appearance.
+- `quiet_command` : same as action_command but without stdout in QUIET mode
 
 
 The flash command depends on you mcus and the way you choose to flash your board : dfu-util, make flash, flashtool, flash_sdcard, mount/cp/umount ... refer to your board documentation to choose the right command
 
-> [!NOTE] About bootloader entry
+> [!NOTE] 
+> ### About bootloader entry
 > Helpers makes easier to enter bootloader,(Thanks to @beavis) : `bootloader_serial.py`, `bootloader_usb.py` or newer `enter_bootloader` can be used
 > ```
 > Usage: enter_bootloader -t <usb|serial|can> -d <serial> [-b baudrate] | -u <canbus_uuid>
