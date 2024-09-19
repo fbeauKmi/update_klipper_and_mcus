@@ -30,27 +30,23 @@ ukam_version () {
   git -C $script_path fetch -q
   s_version=$(git -C $script_path describe --always --tags --long --dirty 2>/dev/null)
   s_remote=$(git -C $script_path describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
-  if [[ $s_version != "" ]] ; then
-    echo -e "  current version $s_version"
-  fi
-  if [[ "$s_version" != "$s_remote"* ]] && ! $QUIET; then
-    echo -e "  new version available $s_remote"
-  fi
+  [[ ! $s_version = "" ]] && echo -e "  current version $s_version"
+  [[ ! $s_version = "$s_remote"* ]] && ! $QUIET && echo -e "  new version available $s_remote"
   return 0
 }
 
 function splash(){
-    echo -e "${LIGHT_MAGENTA}"
-    echo "   ++————————————————————————————————++ "
-    echo "  ||    _   _ _   __  ___  ___  ___   ||"
-    echo "  ||   | | | | | / / / _ \ |  \/  |   ||"
-    echo "  ||   | | | | |/ / / /_\ \| .  . |   ||"
-    echo "  ||   | | | |    \ |  _  || |\/| |   ||"
-    echo "  ||   | |_| | |\  \| | | || |  | |   ||"
-    echo "  ||    \___/\_| \_/\_| |_/\_|  |_/   ||"
-    echo "  ||                                  ||"
-    echo "  ++ — Update — Klipper — & — Mcus —— ++"
-    echo "   ++————————————————————————————————++ "
+    echo -e "${LIGHT_MAGENTA}
+   ++————————————————————————————————++ 
+  ||    _   _ _   __  ___  ___  ___   ||
+  ||   | | | | | / / / _ \ |  \/  |   ||
+  ||   | | | | |/ / / /_\ \| .  . |   ||
+  ||   | | | |    \ |  _  || |\/| |   ||
+  ||   | |_| | |\  \| | | || |  | |   ||
+  ||    \___/\_| \_/\_| |_/\_|  |_/   ||
+  ||                                  ||
+  ++ — Update — Klipper — & — Mcus —— ++
+   ++————————————————————————————————++"
     ukam_version
 }
 
