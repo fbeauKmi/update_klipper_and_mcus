@@ -50,27 +50,20 @@ function do_rollback(){
             DO_ROLLBACK=false
         fi
     fi
-    if ! $DO_ROLLBACK ; then 
-        if prompt "Do you want to define the number of commits you want to cancel ?"; then
-            while ! $DO_ROLLBACK ; do
-                nb_rollback=""
-                while [[ ! "$nb_rollback" =~ ^[0-9]+$ ]] ; do
-                    read -p "${MAGENTA}Number of commits to rollback or [A] to abort ? ${DEFAULT}" nb_rollback
-                    if [[ "${nb_rollback^^}" == "A" ]] ; then
-                    echo "Rollback aborted"
-                    return 0
-                    fi
-                done
-                rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback --tags --always --long)
-                if prompt "Rollback to $rollback_version ?"; then
-                    DO_ROLLBACK=true
-                fi
-            done
-        else
-            echo "Rollback aborted"
-            return 0
+    while ! $DO_ROLLBACK ; do
+        nb_rollback=""
+        while [[ ! "$nb_rollback" =~ ^[0-9]+$ ]] ; do
+            read -p "${MAGENTA}Number of commits to rollback or [A] to abort ? ${DEFAULT}" nb_rollback
+            if [[ "${nb_rollback^^}" == "A" ]] ; then
+                echo "Rollback aborted"
+                return 0
+            fi
+        done
+        rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback --tags --always --long)
+        if prompt "Rollback to $rollback_version ?"; then
+            DO_ROLLBACK=true
         fi
-    fi
+    done
     if $DO_ROLLBACK ; then
         git -C ~/klipper reset --hard $rollback_version
         k_local_version=$rollback_version 
