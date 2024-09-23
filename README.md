@@ -7,8 +7,8 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
 - [Disclaimer](#disclaimer)<!-- omit in toc -->
 - [What UKAM does ?](#what-ukam-does-)
 - [Installation](#installation)
-  - [Method 1 : Manual](#method-1-)
-  - [Method 2 : git clone](#method-2-)
+  - [Method 1 : git clone](#method-1--git-clone)
+  - [Method 2 : manual copy](#method-2--manual-copy)
 - [Update UKAM with Moonraker](#update-ukam-with-moonraker)
 - [Usage](#usage)
 - [Edit mcus.ini](#edit-mcusini)
@@ -19,6 +19,7 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
     - [RP2040 based board](#rp2040-based-board)
     - [Mainboard : USB connection](#mainboard--usb-connection)
     - [Toolhead : CANbus (Katapult required)](#toolhead--canbus-katapult-required)
+- [About backup](#about-backup)
 - [TODO](#todo)
 - [Aknowledgments](#aknowledgments)
   
@@ -76,7 +77,7 @@ Ensure to make `ukam.sh` executable :
 chmod +x ~/<script_folder>/update_klipper.sh
 ```
 
-> [!NOTE]
+> [!CAUTION]
 > This method does not track update of the script 
 
 
@@ -118,7 +119,7 @@ Skip Klipper update to repo or force Mcus update if Klipper is already up to dat
 ### -r --rollback
 Rollback to the previous version saved by this script. It proceed a hard reset if the repo is dirty, untracked files will be erased, plugins will need to be reinstalled 
 
->[!NOTE] 
+>[!TIP] 
 > NEW : You can now go back to any commit if the saved value doesn't suit you.
 
 ### -m --menuconfig
@@ -257,7 +258,7 @@ action_command: ~/katapult/scripts/flashtool.py -u <canbus_uuid>
 ## About backup
 
 A common way to backup your printer config and history is to save `~/printer_data` folder. To help to backup Ukam create a simlink at `~/printer_data/ukam`.
->[!NOTE]
+>[!TIP]
 >[Klipper-backup](https://github.com/Armchair-Heavy-Industries/klipper-backup) from Armchair-Engineering is an easy tool to backup/restore your printer
 >on a github account
 
