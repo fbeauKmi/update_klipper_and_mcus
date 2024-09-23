@@ -113,3 +113,16 @@ except serial.SerialException as e:
             ;;
     esac
 }
+
+function link_config {
+    ukam_config="${HOME}/printer_data/ukam"
+
+    if [ ! -L $ukam_config ]; then
+        echo -e "\n${DEFAULT}Linking Ukam to ~/printer_data/ukam_config"
+        ln -s $script_path $ukam_config
+    elif [ ! -e $ukam_config ]; then
+        unlink $ukam_config
+        echo -e "\n${DEFAULT}Re-linking Ukam to ~/printer_data/ukam_config"
+        echo "ln -s $script_path/config $ukam_config"
+    fi
+}

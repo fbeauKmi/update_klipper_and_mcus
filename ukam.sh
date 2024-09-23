@@ -52,7 +52,7 @@ function splash(){
 
 # Define the main function
 function main(){
-    
+    link_config
     get_klipper_vars
     load_mcus_config
 

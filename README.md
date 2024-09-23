@@ -254,9 +254,15 @@ klipper_section: mcu ebb36
 action_command: ~/katapult/scripts/flashtool.py -u <canbus_uuid>
 ```
 
+## About backup
+
+A common way to backup your printer config and history is to save `~/printer_data` folder. To help to backup Ukam create a simlink at `~/printer_data/ukam`.
+>[!NOTE]
+>[Klipper-backup](https://github.com/Armchair-Heavy-Industries/klipper-backup) from Armchair-Engineering is an easy tool to backup/restore your printer
+>on a github account
 
 ## TODO
-not to much, the script works. If you have any suggestions feel free to contact me on Voron discord @fboc
+Not to much, the script works. If you have any suggestions feel free to contact me on Voron discord @fboc
 ## Aknowledgments
 
 This script would be nothing without the development of [Klipper](https://github.com/Klipper3d/klipper),
