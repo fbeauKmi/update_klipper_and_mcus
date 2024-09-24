@@ -9,12 +9,8 @@ function get_rollback {
     filename="$1"
     if [[ -f "$filename" ]]; then
       while IFS= read -r value || [[ -n "$value" ]]; do
-           if [ $count -eq 0 ]; then
-               rollback_version="$value"   
-           elif [ $count -eq 1 ]; then
-               rollback_repo="$value"
-               break
-           fi
+           [ $count -eq 0 ] && rollback_version="$value"   
+           [ $count -eq 1 ] && rollback_repo="$value" && break
            count=$(($count + 1))
        done < "$filename"
     fi
@@ -23,7 +19,7 @@ function get_rollback {
 
 function show_rollback {
     
-    get_rollback $script_path/config/.previous_version
+    get_rollback $ukam_path/config/.previous_version
 
     if [[ $rollback_version != "" && $rollback_version != $k_local_version ]] ; then
         if [[ $rollback_repo == "" || $rollback_repo == "$k_repo $k_fullbranch" ]] ; then
@@ -31,8 +27,8 @@ function show_rollback {
             echo "Known rollback version $rollback_version"
             DO_ROLLBACK=true
         else
-            echo "rollback version $rollback_version belong to another repository or branch"
-            echo "$rollback_repo"
+            echo "Version $rollback_version belongs to another repo/branch"
+            echo -e "${GREEN}$rollback_repo${DEFAULT}"
         fi
     fi
     if ! $DO_ROLLBACK ; then
@@ -75,5 +71,5 @@ function do_rollback(){
 }
 
 function store_rollback_version(){
-    echo -e "$k_local_version\n$k_repo $k_fullbranch" > $script_path/config/.previous_version
+    echo -e "$k_local_version\n$k_repo $k_fullbranch" > $ukam_path/config/.previous_version
 }

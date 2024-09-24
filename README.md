@@ -3,14 +3,31 @@
 
 This is small bash script to update klipper and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 
+> [!IMPORTANT]
+> The version 0.0.5 of the script introduces major changes:
+> - `ukam.sh` replaces `update_klipper.sh`
+> - `ukam.sh` need also `./scripts` folder in order to work properly
+> - Ukam folder is now linked in `~/printer_data`, easier to backup
+> - `--rollback` allows to revert ot any commit
+> - Menuconfig does not appear for boards already configured.
+> 
+> Fixes:
+> - space character is allowed in section name
+> - klipper service is only stopped when needed 
+> 
+> However your old `mcus.ini` is still compatible with the reworked script.
+> Just add `klipper_section` for each mcu, in order to check firmware version
+> on the board. see [Edit mcus.ini](#edit-mcusini)
+
 ## Table of Contents 
 - [Disclaimer](#disclaimer)<!-- omit in toc -->
 - [What UKAM does ?](#what-ukam-does-)
 - [Installation](#installation)
-  - [Method 1 : git clone](#method-1--git-clone)
+  - [Method 1 : git clone (recommended)](#method-1--git-clone)
   - [Method 2 : manual copy](#method-2--manual-copy)
 - [Update UKAM with Moonraker](#update-ukam-with-moonraker)
 - [Usage](#usage)
+  - [Options](#options)
 - [Edit mcus.ini](#edit-mcusini)
   - [mcus.ini examples](#mcusini-examples-more-to-come-)
     - [RPi microcontroller](#rpi-microcontroller)
@@ -20,6 +37,7 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
     - [Mainboard : USB connection](#mainboard--usb-connection)
     - [Toolhead : CANbus (Katapult required)](#toolhead--canbus-katapult-required)
 - [About backup](#about-backup)
+- [Questions & Answers](#qa)
 - [TODO](#todo)
 - [Aknowledgments](#aknowledgments)
   
@@ -60,7 +78,7 @@ service klipper start
 
 ## Installation
 
-### Method 1 : Git clone
+### Method 1 : Git clone (recommended)
 ```
 cd ~
 git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git ukam
@@ -96,7 +114,9 @@ is_system_service: False
 
 Run `~/<script_folder>/ukam.sh` in a terminal, you can use the following options.
 
-### -h --help : to see usage
+### Options 
+
+#### -h --help : to see usage
 
 ```
 Usage: ukam.sh [<config_file>] [-h]
@@ -112,21 +132,21 @@ Optional args: <config_file> Specify the config file to use. Default is 'mcus.in
   -v, --verbose              For debug purpose, display parsed config
   -h, --help                 Display this help message and exit
 ```
-### -c --checkonly
+#### -c --checkonly
 Check if Klipper is up-to-date, if not, it displays latest commits.
-### -f --firmware : to force MCUs update
+#### -f --firmware : to force MCUs update
 Skip Klipper update to repo or force Mcus update if Klipper is already up to date 
-### -r --rollback
+#### -r --rollback
 Rollback to the previous version saved by this script. It proceed a hard reset if the repo is dirty, untracked files will be erased, plugins will need to be reinstalled 
 
 >[!TIP] 
 > NEW : You can now go back to any commit if the saved value doesn't suit you.
 
-### -m --menuconfig
+#### -m --menuconfig
 Do `make menuconfig` before firmware build, without this option the
 Menuconfig is displayed only while config file for the mcu doesn't exists. 
 
-### -q --quiet : QUIET mode is Dangereous !
+#### -q --quiet : QUIET mode is Dangereous !
 
 Quiet mode allows you to update all you configure without any interaction. Just run the script and all is done. But ....
 - To use it, you need to run th script in interactive mode at least the first time.
@@ -261,6 +281,20 @@ A common way to backup your printer config and history is to save `~/printer_dat
 >[!TIP]
 >[Klipper-backup](https://github.com/Armchair-Heavy-Industries/klipper-backup) from Armchair-Engineering is an easy tool to backup/restore your printer
 >on a github account
+
+## Questions & Answers
+**Q : Can I rename a section ?** \
+A : You can, but unless you rename the config file in `~/printer_date/ukam/config` you'll lose mcu config, and the menuconfig will appear the next times you Ukam.\
+> [!TIP]
+> In config name, a [space] becomes an underscore character
+
+**Q : For some reason Mcu flash failed, what should I do ?** \
+A : If `mcus.ini` is properly set. Check the board state (depends on the way 
+you connect your board : `lsusb`, `flashtool.py` are common tools). If board is
+visible, run the `./ukam.sh` again.
+
+**Q: Does UKAM update Katapult ?** \
+A : No, there's no point to update the bootloader.
 
 ## TODO
 Not to much, the script works. If you have any suggestions feel free to contact me on Voron discord @fboc

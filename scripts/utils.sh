@@ -27,16 +27,22 @@ LIGHT_MAGENTA=$'\033[1;35m'
 CYAN=$'\033[0;36m'
 WHITE=$'\033[0;37m'
 DEFAULT=$'\033[0m'
-
+BOLD=$(tput bold)
+NORMAL=$(tput sgr0)
 
 # Define a function to prompt the user with a yes/no question and return their answer
 prompt () {
+    local default="Yn"
+    [ $# -eq 2 ] && [ ${2^} = "N" ] && default="yN"
+
     if $QUIET ; then return 0 ; fi
     while true; do
-        read -p "${MAGENTA}$* [Y/n]: ${DEFAULT}" yn
+        read -p "${MAGENTA}$1 [$default]: ${DEFAULT}" yn
         case $yn in
             [Yy]*) return 0  ;;
-            "")    return 0  ;;  # Return 0 on Enter key press (Y as default)
+            "")
+                [ $default = "yN" ] && return 1  # Return 1 on Enter key press (N as default)
+                return 0  ;;  # Return 0 on Enter key press (Y as default)
             [Nn]*) return 1  ;;
         esac
     done
@@ -116,13 +122,12 @@ except serial.SerialException as e:
 
 function link_config {
     ukam_config="${HOME}/printer_data/ukam"
-
     if [ ! -L $ukam_config ]; then
         echo -e "\n${DEFAULT}Linking Ukam to ~/printer_data/ukam_config"
-        ln -s $script_path $ukam_config
+        ln -s $ukam_path $ukam_config
     elif [ ! -e $ukam_config ]; then
         unlink $ukam_config
         echo -e "\n${DEFAULT}Re-linking Ukam to ~/printer_data/ukam_config"
-        echo "ln -s $script_path/config $ukam_config"
+        ln -s $ukam_path $ukam_config
     fi
 }

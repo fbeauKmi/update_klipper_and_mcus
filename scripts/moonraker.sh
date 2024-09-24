@@ -47,9 +47,8 @@ function get_mcus_version(){
             echo "Printer is not started! Unable to collect Klipper infos on mcus"
             return 0
         fi
-        echo "Printer is not ready ! YOU MUST NOT UPDATE MCUS WHILE PRINTING !"
-        exit 1
+        error_exit "Printer is not ready ! YOU MUST NOT UPDATE MCUS WHILE PRINTING !"
     fi
-    echo "Failed to query Moonraker. Unable to collect Klipper infos on mcus"
+    echo -e "${RED}Failed to query Moonraker. Unable to collect Klipper infos on mcus${DEFAULT}"
     return 0
 }

@@ -16,20 +16,20 @@
 # Exit on error
 set -e 
 # Get Current script fullpath
-script_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+ukam_path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 #Load functions
-source "$script_path/scripts/utils.sh"
-source "$script_path/scripts/mcus.sh"
-source "$script_path/scripts/klipper.sh"
-source "$script_path/scripts/rollback.sh"
-source "$script_path/scripts/moonraker.sh"
+source "$ukam_path/scripts/utils.sh"
+source "$ukam_path/scripts/mcus.sh"
+source "$ukam_path/scripts/klipper.sh"
+source "$ukam_path/scripts/rollback.sh"
+source "$ukam_path/scripts/moonraker.sh"
 
 # Display versions
 ukam_version () {
-  git -C $script_path fetch -q
-  s_version=$(git -C $script_path describe --always --tags --long --dirty 2>/dev/null)
-  s_remote=$(git -C $script_path describe "origin/$(git rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
+  git -C $ukam_path fetch -q
+  s_version=$(git -C $ukam_path describe --always --tags --long --dirty 2>/dev/null)
+  s_remote=$(git -C $ukam_path describe "origin/$(git -C $ukam_path rev-parse --abbrev-ref HEAD)" --always --tags --long 2>/dev/null)
   [[ ! $s_version = "" ]] && echo -e "  current version $s_version"
   [[ ! $s_version = "$s_remote"* ]] && ! $QUIET && echo -e "  new version available $s_remote"
   return 0
@@ -103,10 +103,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Call usage function if --help or -h is specified
-if [[ $HELP == true ]]; then
-  usage
-  exit 0
-fi
+[[ $HELP == true ]] && usage && exit 0
 
 splash
 main

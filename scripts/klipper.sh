@@ -26,7 +26,7 @@ function find_klipper_venv() {
     if [ -d "$venv_dir" ]; then
         echo "$venv_dir/bin/python"
     else
-        error_exit "Klipper virtual environment not found at $venv_dir"
+        error_exit "Klipper virtual-env not found at $venv_dir"
     fi
 }
 
@@ -36,10 +36,10 @@ function klipperservice {
     klipperrunning=$(systemctl is-active klipper >/dev/null 2>&1 && echo true || echo false)
     
     ! $klipperstate && return 0
-    [[ "$1" = "start" ]] && $klipperrunning && return 0
-    [[ "$1" = "stop" ]] && ! $klipperrunning && return 0
+    [[ "$1" = "start" ]] && str="ing" && $klipperrunning && return 0
+    [[ "$1" = "stop" ]] && str="ping" && ! $klipperrunning && return 0
     klipperrunning=false
-    echo -e "${RED}${1^} Klipper service${DEFAULT}"
+    echo -e "${RED}${1^}$str Klipper service${DEFAULT}"
     sudo service klipper $1
     return 0
 }
@@ -47,12 +47,12 @@ function klipperservice {
 function update_klipper(){
 
     if [[ $k_local_version == $k_remote_version ]] ; then
-        echo  -e "Klipper is already up to date : ${GREEN}$k_local_version"
+        echo  -e "Klipper is up to date : ${GREEN}$k_local_version"
         echo "$k_repo $k_fullbranch${DEFAULT}"
     else
         if [[ "$k_local_version" == *"dirty"* ]]; then
-            echo -e "${RED}Your repo is dirty, try to solve this before update${DEFAULT}"
-            echo "Conflict to solve : "
+            echo -e "${RED}Klipper repo is dirty, try to solve this before update${DEFAULT}"
+            echo "Conflict(s) to solve : "
             git -C ~/klipper status --short
             TOUPDATE=false
         else
@@ -67,7 +67,7 @@ function update_klipper(){
                 git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
                 k_local_version=$k_remote_version
             else
-                echo  "Klipper can be updated from $k_repo $k_fullbranch"
+                echo  -e "Klipper can be updated\n ${BLUE}$k_repo $k_fullbranch${DEFAULT}"
             fi
         fi
     fi

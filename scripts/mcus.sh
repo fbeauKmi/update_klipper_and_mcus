@@ -9,7 +9,7 @@ mcu_order=()
 
 # Define a function to initialize the flash_actions array from the config file
 function load_mcus_config(){
-  filename=${CONFIG:-$script_path/mcus.ini}
+  filename=${CONFIG:-$ukam_path/mcus.ini}
   if [[ -f "$filename" ]]; then
     file_content=$( tr '\r' '\n' < "$filename" )
 
@@ -63,7 +63,7 @@ function load_mcus_config(){
     fi
     return 0
   fi
-  error_exit  "$filename does not exist, unable to update"
+  error_exit  "$ukam_path/$filename does not exist, unable to update"
 }
 
 # Define a function to update the firmware on the MCUs
@@ -71,47 +71,49 @@ function update_mcus () {
     # Loop over the keys (MCUs) in the flash_actions array
     for mcu in "${mcu_order[@]}"
     do
-        
+        def=y
         if [ -n "${mcu_version["$mcu"]}" ] ; then
           mcu_str="$mcu [${mcu_info["$mcu"]}]"
           if [[ ${mcu_version["$mcu"]} == $k_local_version ]]; then
               if ! $FIRMWAREONLY ; then
-                echo -e "$mcu_str version is already ${GREEN}$k_local_version${DEFAULT}. ${RED}Skip flash process!${DEFAULT}"
+                echo -e "$mcu_str version is ${GREEN}$k_local_version${DEFAULT}. ${RED}Skip flash process!${DEFAULT}"
                 continue
               fi
-              if prompt "${WHITE}$mcu_str${MAGENTA} version is already ${GREEN}$k_local_version${MAGENTA}. Do you really want to flash it ?" ; then
-                  :
-              else
+              if ! prompt "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$k_local_version${MAGENTA}. Do you want to flash it ?" n ; then
                   continue
               fi
           else
-              echo -e "$mcu_str version is ${GREEN}${mcu_version["$mcu"]}${DEFAULT} update to ${GREEN}$k_local_version${DEFAULT}."
+              echo -e "$mcu_str version is ${GREEN}${mcu_version["$mcu"]}${DEFAULT} => ${GREEN}$k_local_version${DEFAULT}."
+              if [ ${mcu_version["$mcu"]} \> $k_local_version ] ; then
+                def=n
+                echo -e "${RED}You gonna flash an older firmware !${DEFAULT}"
+              fi
           fi
         else
           mcu_str="$mcu"
         fi
         # Prompt the user whether to update this MCU
-        if prompt "Update $mcu_str ?" ; then
+        if prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def ; then
             :
         else
             continue
         fi
         klipperservice stop
         # Check if the config folder exists
-        if [ ! -d "$script_path/config" ]; then
+        if [ ! -d "$ukam_path/config" ]; then
             # If it doesn't exist, create it
-            mkdir -p "$script_path/config"
-            echo "Config folder created at: $script_path/config"
+            mkdir -p "$ukam_path/config"
+            echo "Config folder created at: $ukam_path/config"
         fi
         
         # Initiate menuconfig check for current mcu
         TMP_MENUCONFIG=$MENUCONFIG
         # Set config_file in the scripts directory 
         target=$( echo $mcu | tr ' ' '_')
-        config_path="$script_path/config/config.$target"
+        config_path="$ukam_path/config/config.$target"
         config_file_str="KCONFIG_CONFIG=$config_path"
         if [[ ! -f "$config_path" ]]; then
-          $QUIET && error_exit "${1^} No config file for $mcu_str, \nDon't use quiet mode on first firmware update!"
+          $QUIET && error_exit "${1^} No config file for $mcu_str in $ukam_path/config \nDon't use quiet mode on first firmware update!"
           TEMP_MENUCONFIG=true
         fi
         
@@ -134,7 +136,7 @@ function update_mcus () {
         fi
 
         FLASHMCU=true
-        $TMP_MENUCONFIG && ! prompt "No errors? Press [Y] to flash $mcu_str" && FLASHMCU=false
+        $TMP_MENUCONFIG && prompt "Errors? Press [N] to flash $mcu_str" n && FLASHMCU=false
 
         if $FLASHMCU ; then
             # Split the flash command string into separate commands and run each one
@@ -155,7 +157,5 @@ function update_mcus () {
             done
         fi
     done
-    # Prompt the user to power cycle the MCUs if necessary
-    echo -e "${BLUE}! Some MCUs may require a power cycle to apply firmware. !${DEFAULT}"
     return 0
 }
