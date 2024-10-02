@@ -50,7 +50,7 @@ prompt () {
 
 # Error function Exit script
 function error_exit() {
-    echo -e "${RED}!!Error: $1${DEFAULT}" >&2
+    echo -e "${RED}!!Error: $*${DEFAULT}" >&2
     exit 1
 }
 

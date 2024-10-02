@@ -3,7 +3,7 @@
 function moonraker_query(){
     local key=$2
     local object=$( echo "$1" | sed 's/ /%20/g' )
-    moonraker_object="http://127.0.0.1:7125/"
+    moonraker_object=http://127.0.0.1:7125/
     eval "$key=\$( curl -s \"$moonraker_object$object\" )"
     if [[ ! $( echo ${!key} | grep -o '"result":') == '"result":' ]] ; then
         return 1
@@ -23,32 +23,43 @@ function list_mcus() {
 }
 
 function get_mcus_version(){
-
-    if moonraker_query "printer/info" json ; then
+    if moonraker_query printer/info json ; then
         parse_json state printer_state
-        if [[ $printer_state == "ready" ]] ; then
-            parse_json python_path k_venv
-            parse_json app k_app
-            moonraker_query "printer/objects/list" json
-            list_mcus mcus
-            for mcu in "${mcus[@]}"
-            do
-                moonraker_query "printer/objects/query?$mcu" json
-                parse_json mcu_version tmp
-                for cmcu in "${mcu_order[@]}"
-                do 
-                    if [[ $mcu == ${mcu_info["$cmcu"]} ]]; then
-                        mcu_version["$cmcu"]=$tmp
-                    fi
+        case $printer_state in 
+        ready)
+            moonraker_query printer/objects/query?print_stats json
+            parse_json state klipper_state
+            case $klipper_state in 
+            printing|paused)
+                error_exit "Printer is not ready (${klipper_state}) !" \
+                           " YOU MUST NOT UPDATE MCUS WHILE PRINTING !"
+                ;;
+            *)
+                moonraker_query printer/objects/list json
+                list_mcus mcus
+                for mcu in "${mcus[@]}"
+                do
+                    moonraker_query printer/objects/query?$mcu json
+                    parse_json mcu_version tmp
+                    for cmcu in "${mcu_order[@]}"
+                    do 
+                        if [[ $mcu == ${mcu_info["$cmcu"]} ]]; then
+                            mcu_version["$cmcu"]=$tmp
+                        fi
+                    done
                 done
-            done
+                return 0
+                ;;
+            esac
+            ;;
+        startup|shutdown|error)
+            echo -e "${RED}Klippy state: ${printer_state}.${DEFAULT}" \
+                    " Unable to collect Klipper infos on mcus"
             return 0
-        elif [[ $printer_state == "startup" ]] ; then
-            echo "Printer is not started! Unable to collect Klipper infos on mcus"
-            return 0
-        fi
-        error_exit "Printer is not ready ! YOU MUST NOT UPDATE MCUS WHILE PRINTING !"
+            ;;
+        esac        
     fi
-    echo -e "${RED}Failed to query Moonraker. Unable to collect Klipper infos on mcus${DEFAULT}"
+    echo -e "${RED}Failed to query Moonraker. Unable " \
+            "to collect Klipper infos on mcus${DEFAULT}"
     return 0
 }
