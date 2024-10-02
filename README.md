@@ -8,7 +8,7 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
 > - `ukam.sh` replaces `update_klipper.sh`
 > - `ukam.sh` need also `./scripts` folder in order to work properly
 > - Ukam folder is now linked in `~/printer_data`, easier to backup
-> - `--rollback` allows to revert ot any commit
+> - `--rollback` allows to revert to any commit
 > - Menuconfig does not appear for boards already configured.
 > 
 > Fixes:
