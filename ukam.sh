@@ -20,7 +20,7 @@ set -e
 # Get Current script fullpath
 ukam_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Config_path
-ukam_config="${HOME}/printer_data/ukam_config"
+ukam_config="${HOME}/printer_data/config/ukam"
 
 #Load functions
 source "$ukam_path/scripts/utils.sh"

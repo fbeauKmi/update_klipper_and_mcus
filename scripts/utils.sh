@@ -27,8 +27,6 @@ LIGHT_MAGENTA=$'\033[1;35m'
 CYAN=$'\033[0;36m'
 WHITE=$'\033[0;37m'
 DEFAULT=$'\033[0m'
-BOLD=$(tput bold)
-NORMAL=$(tput sgr0)
 
 # Define a function to prompt the user with a y/n question
 prompt() {
@@ -132,11 +130,14 @@ except serial.SerialException as e:
 function link_config {
     if [ ! -d $ukam_config ]; then
         mkdir $ukam_config
-        echo -e "\n${DEFAULT}New config folder at ${ukam_config}"
+        echo -e "\n${DEFAULT}New config folder ${ukam_config}"
         ln -s $ukam_path/config $ukam_config/config
         if [ -e $ukam_path/mcus.ini ]; then
             echo -e "${DEFAULT}Moving mcus.ini to ${ukam_config}\n"
             mv $ukam_path/mcus.ini $ukam_config
+        else
+            echo -e "${DEFAULT}Copying  sample mcus.ini to ${ukam_config}\n"
+            cp $ukam_path/examples/mcus.ini $ukam_config
         fi
     fi
 }

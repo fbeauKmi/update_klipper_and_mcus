@@ -74,13 +74,12 @@ function update_mcus() {
     if [ -n "${mcu_version["$mcu"]}" ]; then
       mcu_str="$mcu [${mcu_info["$mcu"]}]"
       if [[ ${mcu_version["$mcu"]} == $k_local_version ]]; then
-        if ! $FIRMWAREONLY; then
+        if $FIRMWAREONLY; then
+          echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$k_local_version"
+          def=n
+        else
           echo -e "$mcu_str version is ${GREEN}$k_local_version${DEFAULT}. " \
             "${RED}Skip flash process!${DEFAULT}"
-          continue
-        fi
-        if ! prompt "${WHITE}$mcu_str${MAGENTA} version is \
-${GREEN}$k_local_version${MAGENTA}. Do you want to flash it ?" \n; then
           continue
         fi
       else
@@ -95,9 +94,7 @@ ${GREEN}$k_local_version${MAGENTA}. Do you want to flash it ?" \n; then
       mcu_str="$mcu"
     fi
     # Prompt the user whether to update this MCU
-    if prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
-      :
-    else
+    if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
       continue
     fi
     klipperservice stop
@@ -140,7 +137,7 @@ ${GREEN}$k_local_version${MAGENTA}. Do you want to flash it ?" \n; then
     fi
 
     FLASHMCU=true
-    $TMP_MENUCONFIG && prompt "Errors? Press [N] to flash $mcu_str" n &&
+    $TMP_MENUCONFIG && ! prompt "Errors? Press [Y] to flash $mcu_str" &&
       FLASHMCU=false
 
     if $FLASHMCU; then
