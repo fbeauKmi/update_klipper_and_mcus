@@ -130,13 +130,13 @@ except serial.SerialException as e:
 }
 
 function link_config {
-    ukam_config="${HOME}/printer_data/ukam"
-    if [ ! -L $ukam_config ]; then
-        echo -e "\n${DEFAULT}Linking Ukam to ~/printer_data/ukam_config"
-        ln -s $ukam_path $ukam_config
-    elif [ ! -e $ukam_config ]; then
-        unlink $ukam_config
-        echo -e "\n${DEFAULT}Re-linking Ukam to ~/printer_data/ukam_config"
-        ln -s $ukam_path $ukam_config
+    if [ ! -d $ukam_config ]; then
+        mkdir $ukam_config
+        echo -e "\n${DEFAULT}New config folder at ${ukam_config}"
+        ln -s $ukam_path/config $ukam_config/config
+        if [ -e $ukam_path/mcus.ini ]; then
+            echo -e "${DEFAULT}Moving mcus.ini to ${ukam_config}\n"
+            mv $ukam_path/mcus.ini $ukam_config
+        fi
     fi
 }

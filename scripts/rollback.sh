@@ -19,7 +19,7 @@ function get_rollback {
 
 function show_rollback {
 
-    get_rollback $ukam_path/config/.previous_version
+    get_rollback $ukam_config/config/.previous_version
 
     if [[ $rollback_version != "" &&
         $rollback_version != $k_local_version ]]; then
@@ -78,5 +78,5 @@ abort ? ${DEFAULT}" nb_rollback
 
 function store_rollback_version() {
     echo -e "$k_local_version\n$k_repo $k_fullbranch" \
-        >$ukam_path/config/.previous_version
+        >$ukam_config/config/.previous_version
 }

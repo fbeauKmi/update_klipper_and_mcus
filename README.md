@@ -7,7 +7,7 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
 > The version 0.0.5 of the script introduces major changes:
 > - `ukam.sh` replaces `update_klipper.sh`
 > - `ukam.sh` need also `./scripts` folder in order to work properly
-> - Ukam folder is now linked in `~/printer_data`, easier to backup
+> - Ukam config folder is `~/printer_data/ukam_config`, easier to backup
 > - `--rollback` allows to revert to any commit
 > - Menuconfig does not appear for boards already configured.
 > 
@@ -84,11 +84,12 @@ cd ~
 git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git ukam
 ```
 
-Copy and edit `mcus.ini` from examples folder to `~/ukam/`
+Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/ukam_config`
 
 
 ### Method 2 : Manual copy
-Copy `ukam.sh`, `/scripts/*.sh` and `mcus.ini` in a folder of your pi, `~/ukam/` sounds as a good choice. Let's call this folder `~/<script_folder>` in this Readme.
+Copy `ukam.sh` and  `/scripts/*.sh` in a folder of your pi, `~/ukam/` sounds as a good choice. Let's call this folder `~/<script_folder>` in this Readme.
+Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/ukam_config`
 
 Ensure to make `ukam.sh` executable : 
 ```

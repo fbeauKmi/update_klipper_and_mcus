@@ -9,7 +9,7 @@ mcu_order=()
 
 # Define a function to initialize the flash_actions array from the config file
 function load_mcus_config() {
-  filename=${CONFIG:-$ukam_path/mcus.ini}
+  filename=${CONFIG:-$ukam_config/mcus.ini}
   if [[ -f "$filename" ]]; then
     file_content=$(tr '\r' '\n' <"$filename")
 
@@ -63,7 +63,7 @@ function load_mcus_config() {
     fi
     return 0
   fi
-  error_exit "$ukam_path/$filename does not exist, unable to update"
+  error_exit "$filename does not exist, unable to update"
 }
 
 # Define a function to update the firmware on the MCUs
@@ -102,21 +102,22 @@ ${GREEN}$k_local_version${MAGENTA}. Do you want to flash it ?" \n; then
     fi
     klipperservice stop
     # Check if the config folder exists
-    if [ ! -d "$ukam_path/config" ]; then
+    if [ ! -d "$ukam_config/config" ]; then
       # If it doesn't exist, create it
-      mkdir -p "$ukam_path/config"
-      echo "Config folder created at: $ukam_path/config"
+      mkdir -p "$ukam_config/config"
+      echo "Config folder created at: $ukam_config/config"
     fi
 
     # Initiate menuconfig check for current mcu
     TMP_MENUCONFIG=$MENUCONFIG
     # Set config_file in the scripts directory
     target=$(echo $mcu | tr ' ' '_')
-    config_path="$ukam_path/config/config.$target"
+    config_path="$ukam_config/config/config.$target"
     config_file_str="KCONFIG_CONFIG=$config_path"
     if [[ ! -f "$config_path" ]]; then
-      $QUIET && error_exit "${1^} No config file for $mcu_str in $ukam_path/" \
-        "config \nDon't use quiet mode on first firmware update!"
+      $QUIET && error_exit "${1^} No config file for $mcu_str in " \
+        "$ukam_config/config \nDon't use quiet mode on first " \
+        "firmware update!"
       TEMP_MENUCONFIG=true
     fi
 
