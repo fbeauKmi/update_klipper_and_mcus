@@ -115,7 +115,7 @@ function update_mcus() {
       $QUIET && error_exit "${1^} No config file for $mcu_str in " \
         "$ukam_config/config \nDon't use quiet mode on first " \
         "firmware update!"
-      TEMP_MENUCONFIG=true
+      TMP_MENUCONFIG=true
     fi
 
     # Change to the Klipper directory
