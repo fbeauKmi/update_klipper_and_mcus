@@ -130,8 +130,10 @@ except serial.SerialException as e:
 function link_config {
   if [ ! -d $ukam_config ]; then
     mkdir $ukam_config
-    echo -e "\n${DEFAULT}New config folder ${ukam_config}"
-    ln -s $ukam_path/config $ukam_config/config
+    echo -e "\n${DEFAULT}Create new config folder ${ukam_config}"
+    if [ -d $ukam_path/config ]; then
+      ln -s $ukam_path/config $ukam_config/config
+    fi
     if [ -e $ukam_path/mcus.ini ]; then
       echo -e "${DEFAULT}Moving mcus.ini to ${ukam_config}\n"
       mv $ukam_path/mcus.ini $ukam_config
