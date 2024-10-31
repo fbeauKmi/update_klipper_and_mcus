@@ -97,7 +97,7 @@ function update_mcus() {
     if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
       continue
     fi
-    klipperservice stop
+
     # Check if the config folder exists
     if [ ! -d "$ukam_config/config" ]; then
       # If it doesn't exist, create it
@@ -118,9 +118,10 @@ function update_mcus() {
       TMP_MENUCONFIG=true
     fi
 
+    # Stop klipper before build firmware
+    klipperservice stop
     # Change to the Klipper directory
     cd ~/klipper
-
     # Clean the previous build and configure for the selected MCU
     make clean $config_file_str
     # Open menuconfig if needed
