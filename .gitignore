@@ -1,5 +1,5 @@
 README.md
 mcus.ini
 !examples/mcus.ini
+config
 config/*
-!config/.placeholder
