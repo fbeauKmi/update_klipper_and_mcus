@@ -98,13 +98,6 @@ function update_mcus() {
       continue
     fi
 
-    # Check if the config folder exists
-    if [ ! -d "$ukam_config/config" ]; then
-      # If it doesn't exist, create it
-      mkdir -p "$ukam_config/config"
-      echo "Config folder created at: $ukam_config/config"
-    fi
-
     # Initiate menuconfig check for current mcu
     TMP_MENUCONFIG=$MENUCONFIG
     # Set config_file in the scripts directory
