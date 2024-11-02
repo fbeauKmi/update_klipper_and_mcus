@@ -158,7 +158,8 @@ Quiet mode allows you to update all you configure without any interaction. Just 
 `mcus.ini` contains : 
 - sections : the name you give to your mcu between brackets \[\] (not necessarly the name in Klipper config)
 - `klipper_section` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
-- `action_command` : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by `;` or use several action_command in a section, they are executed in order of appearance.
+- **NEW** `config_name` [optional] : The name of the file used by menuconfig. Multiple MCU entries can share the same `config_name`. See [Toolchanger config example](#toolchanger--usb-connection).
+- `action_command` [required] : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by `;` or use several action_command in a section, they are executed in order of appearance.
 - `quiet_command` : same as action_command but without stdout in QUIET mode
 
 The flash command depends on you mcus and the way you choose to flash your board : dfu-util, make flash, flashtool, flash_sdcard, mount/cp/umount ... refer to your board documentation to choose the right command
@@ -176,7 +177,7 @@ The flash command depends on you mcus and the way you choose to flash your board
 
 ### mcus.ini examples (more to come) : 
 #### RPi microcontroller 
-```
+```elixir
 # For Rpi
 [RaspberryPi]
 klipper_section: mcu rpi
@@ -186,7 +187,7 @@ _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#build
 
 #### Serial connection, UART
 
-```
+```elixir
 # For a MCU in usart, using flash_sdcard
 # The second arg of flash_sdcard.sh is the cpu reference.
 # A list of available values can be found here :
@@ -197,7 +198,7 @@ flash_command: ./scripts/flash-sdcard.sh /dev/ttyAMA0 btt-octopus-f446-v1
 ```
 _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
 
-```
+```elixir
 # For mainboard using bootloader_serial helper 
 [spider]
 klipper_section: mcu
@@ -209,7 +210,7 @@ _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#physical
 
 #### Mainboard , USB_to_CAN bridge mode (Katapult required)
 
-```
+```elixir
 # For a MCU in USB to Can bridge using Katapult as bootloader
 # You have to insert your Canbus_uuid and Usb serial below
 [octopus_usb2can]
@@ -227,30 +228,30 @@ _source : [Roguyt_prepare_command branch ^^](../roguyt_prepare_command/mcus.ini)
 
 #### RP2040 based board
 
-```
+```elixir
 # For Pico RP2040
 [pico]
 klipper_section: mcu nevermore
 #  No boot loader, need to manually enter in boot mode
-action_command : sudo mount /dev/sda1 /mnt ; sudo cp out/klipper.uf2 /mnt ; sudo umount /mnt
+action_command: sudo mount /dev/sda1 /mnt ; sudo cp out/klipper.uf2 /mnt ; sudo umount /mnt
 
 [pico_bootloader]
 klipper_section: mcu
 # With katapult as bootloader
-action_command : make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
+action_command: make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
 
 [pico_bootloader]
 klipper_section: mcu
 # With katapult as bootloader
-quiet_command : enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
-action_command : ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
+quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
+action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD_ID>-if00
 
 ```
-_source: Cannot remember_
+_source: Cannot remember_ lol ;)
 
 #### Mainboard : USB connection
 
-```
+```elixir
 [catalyst]
 klipper_section: mcu
 # catalyst on usb-serial port (using bootloader_usb.py)
@@ -260,7 +261,7 @@ action_command: ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapul
 ```
 _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#python-with-flash_usb)_
 
-```
+```elixir
 [catalyst]
 klipper_section: mcu
 # catalyst on usb-serial port (using make flash)
@@ -270,11 +271,33 @@ _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#build
 
 #### Toolhead : CANbus (Katapult required)
 
-```
+```elixir
 [toolhead]
 klipper_section: mcu ebb36
 action_command: ~/katapult/scripts/flashtool.py -u <canbus_uuid>
 ```
+
+#### Toolchanger : Usb connection
+
+```elixir
+[mcu tool1]
+quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD1_ID>-if00
+action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD1_ID>-if00
+
+[mcu tool2]
+# Share menuconfig with mcu tool1
+config_name: mcu tool1
+quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD2_ID>-if00
+action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD2_ID>-if00
+
+[mcu toolN]
+# Share menuconfig with mcu tool1
+config_name: mcu_tool1
+quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARDN_ID>-if00
+action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARDN_ID>-if00
+```
+
+_source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/10)_
 
 ## About backup
 

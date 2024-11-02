@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Define an associative arrays "flash_actions", "mcu_info"
+# Define an associative arrays "flash_actions", "mcu_info", "mcu_version", "config_name"
 declare -A flash_actions
 declare -A mcu_info
 declare -A mcu_version
+declare -A config_name
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
 mcu_order=()
 
@@ -42,6 +43,8 @@ function load_mcus_config() {
         fi
       elif [[ $key == klipper_section ]]; then
         mcu_info["$section"]=$(echo $value)
+      elif [[ $key == config_name ]]; then
+        config_name["$section"]=$(echo $value)
       fi
     done <<<"$file_content"
 
@@ -70,6 +73,9 @@ function load_mcus_config() {
 function update_mcus() {
   # Loop over the keys (MCUs) in the flash_actions array
   for mcu in "${mcu_order[@]}"; do
+    # Initiate variables for current mcu
+    TMP_MENUCONFIG=$MENUCONFIG
+    SHARED_CONFIG=false
     def=y
     if [ -n "${mcu_version["$mcu"]}" ]; then
       mcu_str="$mcu [${mcu_info["$mcu"]}]"
@@ -98,10 +104,12 @@ function update_mcus() {
       continue
     fi
 
-    # Initiate menuconfig check for current mcu
-    TMP_MENUCONFIG=$MENUCONFIG
     # Set config_file in the scripts directory
     target=$(echo $mcu | tr ' ' '_')
+    if [ -n "${config_name["$mcu"]}" ]; then
+      target=$(echo ${config_name["$mcu"]} | tr ' ' '_')
+      SHARED_CONFIG=true
+    fi
     config_path="$ukam_config/config/config.$target"
     config_file_str="KCONFIG_CONFIG=$config_path"
     if [[ ! -f "$config_path" ]]; then
@@ -120,6 +128,21 @@ function update_mcus() {
     # Open menuconfig if needed
     if $TMP_MENUCONFIG; then
       make menuconfig $config_file_str
+    fi
+    # Check if forged ID is present in config file for shared config
+    if $SHARED_CONFIG; then
+      while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|"\
+"# CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
+
+        echo -e "${RED}Forged Serial/CanBus ID is incompatible with " \
+          "config_name option.${DEFAULT}"
+        if prompt "Change menuconfig now ?"; then
+          make menuconfig $config_file_str
+          while [ ! -f $config_path ]; do sleep 1; done
+        else
+          error_exit "Serial id must not be forged while config file is shared"
+        fi
+      done
     fi
 
     # Check CPU thread number (added by @roguyt to build faster)
