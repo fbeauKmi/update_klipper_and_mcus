@@ -1,9 +1,18 @@
 ![UKAM_Banner](./images/banner.png)
 # **UKAM : Update Klipper And Mcus** all-at-once.
 
+> [!WARNING]
+> ### Do not update mcu firmwares with every commit!
+> Modern MCUs have limited write cycles (>100K cycles for an EEPROM, about 10K cycles for a STM32 chip). Updating the firmware with each release could shorten the life of your MCU.
+> 
+> ### How often should I use UKAM? 
+> Every time Klipper mentions to update an MCU at startup, no more.
+> ### So why do I need UKAM ?
+> It will make your life easier when Klipper asks you to update your MCUs.
+
 This is small bash script to update klipper and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 
-> [!IMPORTANT]
+> [!NOTE]
 > The version 0.0.5 of the script introduces major changes:
 > - `ukam.sh` replaces `update_klipper.sh`
 > - `ukam.sh` need also `./scripts` folder in order to work properly
