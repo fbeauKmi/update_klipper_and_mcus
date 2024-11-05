@@ -128,12 +128,16 @@ function update_mcus() {
     # Open menuconfig if needed
     if $TMP_MENUCONFIG; then
       make menuconfig $config_file_str
+      # Check a menuconfig file is saved
+      if [ ! -f $config_path ]; 
+        error_exit "No config file, No update." \
+         "Next time, save the menuconfig changes. Bye !"
+      fi
     fi
     # Check if forged ID is present in config file for shared config
     if $SHARED_CONFIG; then
       while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|"\
 "# CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
-
         echo -e "${RED}Forged Serial/CanBus ID is incompatible with " \
           "config_name option.${DEFAULT}"
         if prompt "Change menuconfig now ?"; then
