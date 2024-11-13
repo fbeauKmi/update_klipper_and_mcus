@@ -126,14 +126,8 @@ function update_mcus() {
     # Clean the previous build and configure for the selected MCU
     make clean $config_file_str
     # Open menuconfig if needed
-    if $TMP_MENUCONFIG; then
-      make menuconfig $config_file_str
-      # Check a menuconfig file is saved
-      if [[ ! -f $config_path ]]; then
-        error_exit "No config file, No update." \
-         "Next time, save the menuconfig changes. Bye !"
-      fi
-    fi
+    $TMP_MENUCONFIG && make menuconfig $config_file_str
+
     # Check if forged ID is present in config file for shared config
     if $SHARED_CONFIG; then
       while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|"\
@@ -142,7 +136,6 @@ function update_mcus() {
           "config_name option.${DEFAULT}"
         if prompt "Change menuconfig now ?"; then
           make menuconfig $config_file_str
-          while [[ ! -f $config_path ]]; do sleep 1; done
         else
           error_exit "Serial ID must not be forged with config_name option"
         fi
