@@ -112,7 +112,7 @@ function update_mcus() {
     fi
     config_path="$ukam_config/config/config.$target"
     config_file_str="KCONFIG_CONFIG=$config_path"
-    if [[ ! -f "$config_path" ]]; then
+    if [[ ! -f $config_path ]]; then
       $QUIET && error_exit "${1^} No config file for $mcu_str in " \
         "$ukam_config/config \nDon't use quiet mode on first " \
         "firmware update!"
@@ -129,7 +129,7 @@ function update_mcus() {
     if $TMP_MENUCONFIG; then
       make menuconfig $config_file_str
       # Check a menuconfig file is saved
-      if [ ! -f $config_path ]; 
+      if [[ ! -f $config_path ]]; then
         error_exit "No config file, No update." \
          "Next time, save the menuconfig changes. Bye !"
       fi
@@ -142,9 +142,9 @@ function update_mcus() {
           "config_name option.${DEFAULT}"
         if prompt "Change menuconfig now ?"; then
           make menuconfig $config_file_str
-          while [ ! -f $config_path ]; do sleep 1; done
+          while [[ ! -f $config_path ]]; do sleep 1; done
         else
-          error_exit "Serial id must not be forged while config file is shared"
+          error_exit "Serial ID must not be forged with config_name option"
         fi
       done
     fi
