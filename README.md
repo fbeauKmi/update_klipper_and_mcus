@@ -45,6 +45,7 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
     - [RP2040 based board](#rp2040-based-board)
     - [Mainboard : USB connection](#mainboard--usb-connection)
     - [Toolhead : CANbus (Katapult required)](#toolhead--canbus-katapult-required)
+    - [Toolchanger : USB connection](#toolchanger--usb-connection)
 - [About backup](#about-backup)
 - [Questions & Answers](#qa)
 - [TODO](#todo)
