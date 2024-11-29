@@ -20,9 +20,8 @@ function load_mcus_config() {
         section=${section%]}
 
         # Check if section already exists
-        if [[ " ${mcu_order[@]} " =~ " ${section} " ]]; then
+        IFS="|"; [[ "|${mcu_order[*]}|" =~ "|$section|" ]] &&
           error_exit "Duplicate section [$section] found in $filename"
-        fi
 
         # Store the order of MCUs in mcu_order array
         mcu_order+=("$section")
