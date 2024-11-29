@@ -10,7 +10,7 @@ function moonraker_query() {
 }
 
 function parse_json() {
-  local value=$(echo "$json" | grep -o "\"$1\": \"[^\"]*" | cut -d'"' -f4)
+  local value=$(echo "$json" | grep -o "\"$1\":[ ]*\"[^\"]*" | cut -d'"' -f4)
   # Use eval to assign the value to the variable name passed as $3
   [[ -z "$value" ]] && return 1
   eval "$2=\"$value\""
@@ -35,15 +35,19 @@ function get_mcus_version() {
   fi
 
   parse_json state printer_state
-  # Abort if printer is startup 
-  if [[ $printer_state == "startup" ]]; then
-    echo -e "${RED}Klippy state: startup.${DEFAULT} Unable to " \
+  # Abort if printer is startup or error
+  if [[ $printer_state =~ ^(startup)$ ]]; then
+    echo -e "${RED}Klippy state: ${printer_state}.${DEFAULT} Unable to " \
     "collect mcus firmware version"
     return 0
   fi
 
   # Check printer state
-  moonraker_query printer/objects/query?print_stats json
+  if ! moonraker_query printer/objects/query?print_stats json; then
+    echo -e "${RED}Klippy state: ${printer_state}.${DEFAULT} Unable to " \
+    "collect mcus firmware version"
+    return 0
+  fi  
   parse_json state klipper_state
   if [[ $klipper_state =~ ^(printing|paused)$ ]]; then
     error_exit "Printer is not ready (${klipper_state}) ! YOU MUST NOT " \
