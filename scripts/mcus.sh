@@ -30,7 +30,7 @@ function load_mcus_config() {
         $key == action_command ]]; then
 
         # Make command quiet, except for stderr, when needed
-        if [[ $key == quiet_command ]] && $QUIET; then
+        if [[ $key == quiet_command ]] || $QUIET; then
           value="$value >/dev/null"
         fi
 
@@ -162,13 +162,9 @@ function update_mcus() {
           # Add KCONFIG_CONFIG=config/$mcu after "make flash"
           command="${command/make\ flash/make\ flash\ $config_file_str}"
         fi
-        if [[ "$command" =~ [[:space:]]*enter_bootloader ]]; then
-          # Execute enter_bootloader directly
-          $command
-        else
-          echo "Command: $command"
-          eval "$command"
-        fi
+        [[ ! "$command" =~ ">/dev/null" ]] && ! $QUIET &&
+         echo "Command: $command"
+        eval "$command"
       done
     fi
   done

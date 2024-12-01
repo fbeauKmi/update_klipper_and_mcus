@@ -53,6 +53,10 @@ function error_exit() {
   exit 1
 }
 
+# Handle unexpected error() {
+function handle_error() {
+  IFS=" "; error_exit Unexpected error $*
+}
 # Function to enter bootloader mode
 # Usage  : enter_bootloader -t [type:usb|serial|can] -d [serial]
 #                           -u [canbus_uuid] -b [baudrate]
