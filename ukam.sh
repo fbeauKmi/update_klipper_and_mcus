@@ -16,7 +16,8 @@
 # this program. If not, see http://www.gnu.org/licenses/.
 
 # Exit on error
-set -e
+set -e -E
+trap 'handle_error $?' ERR
 # Get Current script fullpath
 ukam_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Config_path
