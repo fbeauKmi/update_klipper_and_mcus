@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Define an associative arrays "flash_actions", "mcu_info", "mcu_version", "config_name"
+# Define an associative arrays "flash_actions", "klipper_section", "mcu_version", "config_name"
 declare -A flash_actions
-declare -A mcu_info
+declare -A klipper_section
 declare -A mcu_version
 declare -A config_name
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
@@ -41,15 +41,15 @@ function load_mcus_config() {
           flash_actions["$section"]="$value"
         fi
       elif [[ $key == klipper_section ]]; then
-        mcu_info["$section"]=$(echo $value)
+        klipper_section["$section"]=$(echo $value | xargs)
       elif [[ $key == config_name ]]; then
-        config_name["$section"]=$(echo $value)
+        config_name["$section"]=$(echo $value | xargs)
       fi
     done <<<"$file_content"
 
     for mcu in "${mcu_order[@]}"; do
-      if [ ! -n "${mcu_info["$mcu"]}" ]; then
-        mcu_info["$mcu"]=$(echo $mcu)
+      if [ ! -n "${klipper_section["$mcu"]}" ]; then
+        klipper_section["$mcu"]=$(echo $mcu | xargs)
       fi
     done
 
@@ -77,7 +77,7 @@ function update_mcus() {
     SHARED_CONFIG=false
     def=y
     if [ -n "${mcu_version["$mcu"]}" ]; then
-      mcu_str="$mcu [${mcu_info["$mcu"]}]"
+      mcu_str="$mcu [${klipper_section["$mcu"]}]"
       if [[ ${mcu_version["$mcu"]} == $k_local_version ]]; then
         if $FIRMWAREONLY; then
           echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$k_local_version"
