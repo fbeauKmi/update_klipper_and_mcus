@@ -314,7 +314,8 @@ _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues
 ```elixir
 #Cartographer
 [cartographer]
-klipper_section: scanner
+klipper_section: mcu scanner
+is_klipper_fw: false
 action_command: ~/cartographer-klipper/scripts/firmare.py -d <canbus_uuid> -f CAN
 
 # Crampon ADXL  
