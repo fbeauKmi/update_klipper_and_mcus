@@ -15,20 +15,26 @@ function load_mcus_config() {
     file_content=$(tr '\r' '\n' <"$filename")
 
     while IFS==: read -r key value; do
-      if [[ $key == \[*] ]]; then
+      key=$(xargs <<<"$key")
+      value=$(xargs <<<"$value")
+      case "$key" in
+      \[*\])
         section=${key#[}
         section=${section%]}
 
         # Check if section already exists
-        IFS="|"; [[ "|${mcu_order[*]}|" =~ "|$section|" ]] &&
-          error_exit "Duplicate section [$section] found in $filename"
+        for existing_section in "${mcu_order[@]}"; do
+          [[ "$existing_section" == "$section" ]] &&
+            error_exit "Duplicate section [$section] found in $filename"
+        done
 
         # Store the order of MCUs in mcu_order array
         mcu_order+=("$section")
-      elif [[ $key == flash_command ||
-        $key == quiet_command ||
-        $key == action_command ]]; then
-
+        # Set default values
+        klipper_section["$section"]=$section
+        config_name["$section"]=$section
+        ;;
+      flash_command | quiet_command | action_command)
         # Make command quiet, except for stderr, when needed
         if [[ $key == quiet_command ]] || $QUIET; then
           value="$value >/dev/null"
@@ -40,32 +46,47 @@ function load_mcus_config() {
         else
           flash_actions["$section"]="$value"
         fi
-      elif [[ $key == klipper_section ]]; then
-        klipper_section["$section"]=$(echo $value | xargs)
-      elif [[ $key == config_name ]]; then
-        config_name["$section"]=$(echo $value | xargs)
-      fi
+        ;;
+      klipper_section)
+        klipper_section["$section"]=$value
+        ;;
+      config_name)
+        config_name["$section"]=$value
+        ;;
+      *)
+        [[ -z "$key" || "$key" =~ ^# ]] && continue
+        error_exit "'$key' is not a valid key"
+        ;;
+      esac
     done <<<"$file_content"
-
-    for mcu in "${mcu_order[@]}"; do
-      if [ ! -n "${klipper_section["$mcu"]}" ]; then
-        klipper_section["$mcu"]=$(echo $mcu | xargs)
-      fi
-    done
-
-    if $VERBOSE; then
-      echo "MCU order: ${mcu_order[@]}"
-      for mcu in "${mcu_order[@]}"; do
-        echo "$mcu: ${flash_actions[$mcu]}"
-      done
-    fi
 
     if [ ${#flash_actions[@]} == 0 ]; then
       error_exit "No mcu in $filename, check documentation"
     fi
+
+    for mcu in "${mcu_order[@]}"; do
+      if [[ -z "${flash_actions[$mcu]}" ]]; then
+        error_exit "No action found for $mcu, check documentation"
+      fi
+    done
     return 0
+
   fi
   error_exit "$filename does not exist, unable to update"
+}
+
+# show config datas
+function show_config() {
+  ! $VERBOSE && return
+  echo -e "\n${BLUE}------- mcu datas -------${DEFAULT}"
+  for mcu in "${mcu_order[@]}"; do
+    echo -e "${RED}[$mcu]${DEFAULT}" \
+      "\n ${GREEN}config_name:${DEFAULT} ${config_name[$mcu]}" \
+      "\n ${GREEN}klipper_section:${DEFAULT} ${klipper_section[$mcu]}" \
+      "\n ${GREEN}mcu_version:${DEFAULT} ${mcu_version[$mcu]}" \
+      "\n ${GREEN}commands:${DEFAULT} ${flash_actions[$mcu]}\n"  
+  done
+  echo -e "${BLUE}------------------------------${DEFAULT}"
 }
 
 # Define a function to update the firmware on the MCUs
@@ -129,8 +150,8 @@ function update_mcus() {
 
     # Check if forged ID is present in config file for shared config
     if $SHARED_CONFIG; then
-      while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|"\
-"# CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
+      while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|""\
+# CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
         echo -e "${RED}Forged Serial/CanBus ID is incompatible with " \
           "config_name option.${DEFAULT}"
         if prompt "Change menuconfig now ?"; then
@@ -163,7 +184,7 @@ function update_mcus() {
           command="${command/make\ flash/make\ flash\ $config_file_str}"
         fi
         [[ ! "$command" =~ ">/dev/null" ]] && ! $QUIET &&
-         echo "Command: $command"
+          echo "Command: $command"
         eval "$command"
       done
     fi
