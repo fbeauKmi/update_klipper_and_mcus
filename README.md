@@ -168,7 +168,8 @@ Quiet mode allows you to update all you configure without any interaction. Just 
 `mcus.ini` contains : 
 - sections : the name you give to your mcu between brackets \[\] (not necessarly the name in Klipper config)
 - `klipper_section` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
-- **NEW** `config_name` [optional] : The name of the file used by menuconfig. Multiple MCU entries can share the same `config_name`. See [Toolchanger config example](#toolchanger--usb-connection).
+- `config_name` [optional] : The name of the file used by menuconfig. Multiple MCU entries can share the same `config_name`. See [Toolchanger config example](#toolchanger--usb-connection).
+- **NEW** `is_klipper_fw` [optional]: `true|false` Determines whether Klipper firmware should be built. By default, `true` for sections starting with `mcu`, `false` for other section types (e.g., `beacon`, `crampon`, `high_resolution_filament_sensor`, `scanner`, ...). See [Non Klipper firmwares examples](#non-klipper-firmwares)
 - `action_command` [required] : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by `;` or use several action_command in a section, they are executed in order of appearance.
 - `quiet_command` : same as action_command but without stdout in QUIET mode
 
@@ -308,6 +309,21 @@ action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapu
 ```
 
 _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/10)_
+
+#### Non Klipper firmwares
+```elixir
+#Cartographer
+[cartographer]
+klipper_section: scanner
+action_command: ~/cartographer-klipper/scripts/firmare.py -d <canbus_uuid> -f CAN
+
+# Crampon ADXL  
+[crampon]
+klipper_section: mcu crampon
+is_klipper_fw: false
+action_command: ~/crampon_anchor/update.sh
+```
+_source : [issue #12](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/12)_
 
 ## About backup
 
