@@ -22,7 +22,7 @@ function list_mcus() {
   local pattern=$( IFS='|'; echo "${klipper_section[*]}" ) # build pattern
   IFS=';'
   # Use mapfile to read the output of grep and sed directly into an array
-  mapfile -t result < <(echo "$json" | grep -oP '"'$pattern | sed 's/"//g')
+  mapfile -t result < <(echo "$json" | grep -oP '"('$pattern')"' | sed 's/"//g')
 
   [[ ${#result[@]} -eq 0 ]] && return 1
   return 0

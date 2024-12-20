@@ -63,6 +63,8 @@ function main() {
   link_config
   get_klipper_vars
   load_mcus_config
+  get_mcus_version
+  show_config
 
   # Check for updates from the Git repo and prompt the user to update the MCUs
   if ! $FIRMWAREONLY; then
@@ -79,7 +81,6 @@ function main() {
 
   if $TOUPDATE; then
     echo -e "\n${BLUE}-- Update Mcus --${DEFAULT}"
-    get_mcus_version
     update_mcus          # call the update_mcus function
     klipperservice start # start the Klipper service
   fi
@@ -90,7 +91,6 @@ function main() {
 }
 
 CHECK=false
-DO_ROLLBACK=false
 FIRMWAREONLY=false
 HELP=false
 MENUCONFIG=false

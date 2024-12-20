@@ -2,6 +2,7 @@
 
 rollback_repo=""
 rollback_version=""
+DO_ROLLBACK=false
 
 #Define function to get previous install version
 function get_rollback {
