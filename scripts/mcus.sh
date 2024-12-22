@@ -34,7 +34,9 @@ function load_mcus_config() {
         # Set default values
         klipper_section["$section"]=$section
         config_name["$section"]=$section
-        is_klipper_fw["$section"]=true
+        mcu_version["$section"]=unknown
+        is_klipper_fw["$section"]=false
+        [[ "$section" =~ ^mcu\s* ]] && is_klipper_fw["$section"]=true
         ;;
       flash_command | quiet_command | action_command)
         # Make command quiet, except for stderr, when needed
@@ -51,7 +53,8 @@ function load_mcus_config() {
         ;;
       klipper_section)
         klipper_section["$section"]=$value
-        [[ ! "$value" =~ ^mcu\s* ]] && is_klipper_fw["$section"]=false
+        is_klipper_fw["$section"]=false
+        [[ "$value" =~ ^mcu\s* ]] && is_klipper_fw["$section"]=true
         ;;
       config_name)
         config_name["$section"]=$value
@@ -60,7 +63,7 @@ function load_mcus_config() {
         case ${value,,} in
         true) value=true ;;
         false) value=false ;;
-        *) error_exit "is_kfw must be true|false" ;;
+        *) error_exit "is_klipper_fw must be true|false" ;;
         esac
         is_klipper_fw["$section"]=$value
         ;;
