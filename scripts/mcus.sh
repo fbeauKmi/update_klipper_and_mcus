@@ -145,6 +145,9 @@ function update_mcus() {
           "firmware update!"
         SHOW_MENUCFG=true
       fi
+    else
+      [ -n $version ] && echo -e "$mcu_str version is ${GREEN}${version}" \
+      "${DEFAULT}"
     fi
 
     # Prompt the user whether to update this MCU

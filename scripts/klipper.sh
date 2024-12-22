@@ -44,6 +44,9 @@ function klipperservice {
   [[ "$1" = "start" ]] && str="ing" && $klipperrunning && return 0
   [[ "$1" = "stop" ]] && str="ping" && ! $klipperrunning && return 0
   klipperrunning=false
+  $ERROR && echo -e "${RED}An error occured Klipper service will not " \
+    "be restarted.\nIf you want to restart it anyway use the command :\n" \
+    "  ${GREEN}\`sudo systemctl start klipper\`${DEFAULT}" && return 0
   echo -e "${RED}${1^}$str Klipper service${DEFAULT}"
   sudo service klipper $1
   return 0

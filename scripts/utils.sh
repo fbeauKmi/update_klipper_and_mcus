@@ -28,6 +28,9 @@ CYAN=$'\033[0;36m'
 WHITE=$'\033[0;37m'
 DEFAULT=$'\033[0m'
 
+# Error handler
+ERROR=false
+
 # Define a function to prompt the user with a y/n question
 prompt() {
   local default="Yn"
@@ -55,7 +58,8 @@ function error_exit() {
 
 # Handle unexpected error() {
 function handle_error() {
-  IFS=" "; error_exit Unexpected error $*
+  ERROR=true
+  echo -e "${RED}!!Error: Unexpected error $*${DEFAULT}" >&2
 }
 # Function to enter bootloader mode
 # Usage  : enter_bootloader -t [type:usb|serial|can] -d [serial]

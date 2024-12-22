@@ -16,7 +16,7 @@
 # this program. If not, see http://www.gnu.org/licenses/.
 
 # Exit on error
-set -e -E
+set -E
 trap 'handle_error $?' ERR
 # Get Current script fullpath
 ukam_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
@@ -84,8 +84,16 @@ function main() {
     update_mcus          # call the update_mcus function
     klipperservice start # start the Klipper service
   fi
+
+  if $ERROR; then
+    echo -e "\n    ${RED}Unfortunately something went wrong ! :("
+    echo -e "       Sorry, no bed engraving today.\n${DEFAULT}"
+
+    exit 1
+  fi
+
   echo -e "\n    ${GREEN}All operations done ! Bye !"
-  echo -e "       Happy bed engraving !\n${DEFAULT}"
+  echo -e "      Happy bed engraving ! ;)\n${DEFAULT}"
 
   exit 0
 }
