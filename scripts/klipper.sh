@@ -44,8 +44,10 @@ function klipperservice {
   [[ "$1" = "start" ]] && str="ing" && $klipperrunning && return 0
   [[ "$1" = "stop" ]] && str="ping" && ! $klipperrunning && return 0
   klipperrunning=false
-  $ERROR && ! prompt "${RED}An error occured !
-Do you want to restart Klipper anyway ?" n && return 0
+  if $ERROR && ! prompt "${RED}An error occured !
+Do you want to restart Klipper anyway ?" n; then
+   return 0
+  fi
   echo -e "${YELLOW}${1^}$str Klipper service${DEFAULT}"
   sudo service klipper $1
   return 0
@@ -62,7 +64,10 @@ function update_klipper() {
         "update${DEFAULT}"
       echo "Conflict(s) to solve : "
       git -C ~/klipper status --short
-      TOUPDATE=false
+      if ! prompt "Do you want to flash firmware on boards anyway ?" n; then
+        TOUPDATE=false
+        ERROR=true
+      fi
     else
       echo "Current Klipper version $k_local_version"
       echo "Next Klipper version $k_remote_version"
