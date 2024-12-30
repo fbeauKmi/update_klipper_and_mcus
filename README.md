@@ -214,8 +214,8 @@ _source : [Klipper doc](https://www.klipper3d.org/SDCard_Updates.html)_
 [spider]
 klipper_section: mcu
 # spider on serial port (rpi gpio)
-action_command: ~/ukam/bootloader_serial.py /dev/ttyAMA0 250000
-action_command: ~/katapult/scripts/flashtool.py -d /dev/ttyAMA0 -b 250000
+action_command: ~/klippy-env/bin/python3 ~/ukam/bootloader_serial.py /dev/ttyAMA0 250000
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/ttyAMA0 -b 250000
 ```
 _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#physical-serial)_
 
@@ -226,14 +226,14 @@ _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#physical
 # You have to insert your Canbus_uuid and Usb serial below
 [octopus_usb2can]
 klipper_section: mcu
-quiet_command: python3 ~/katapult/scripts/flashtool.py -i can0 -r -u <YOUR_CANBUS_UUID>; sleep 2
-action_command: python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
+quiet_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -r -u <YOUR_CANBUS_UUID>; sleep 2
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
 
 # using enter_bootoader function
 [octopus_usb2can]
 klipper_section: mcu
 quiet_command: enter_bootloader -u <YOUR_CANBUS_UUID>
-action_command: python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f446xx_<BOARD_ID>-if00
 ```
 _source : [Roguyt_prepare_command branch ^^](../roguyt_prepare_command/mcus.ini)_
 
@@ -255,7 +255,7 @@ action_command: make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<BO
 klipper_section: mcu
 # With katapult as bootloader
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
-action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD_ID>-if00
 
 ```
 _source: Cannot remember_ lol ;)
@@ -266,9 +266,9 @@ _source: Cannot remember_ lol ;)
 [catalyst]
 klipper_section: mcu
 # catalyst on usb-serial port (using bootloader_usb.py)
-action_command: ~/ukam/bootloader_usb.py /dev/serial/by-id/usb-Klipper_stm32f401xc_<board_serial>
+action_command: ~/klippy-env/bin/python3 ~/ukam/bootloader_usb.py /dev/serial/by-id/usb-Klipper_stm32f401xc_<board_serial>
 quiet_command: sleep 1
-action_command: ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f401xc_<board_serial> -b 250000
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_stm32f401xc_<board_serial> -b 250000
 ```
 _source : [Klipper doc](https://www.klipper3d.org/Bootloader_Entry.html#python-with-flash_usb)_
 
@@ -285,7 +285,7 @@ _source : [Klipper doc](https://www.klipper3d.org/RPi_microcontroller.html#build
 ```elixir
 [toolhead]
 klipper_section: mcu ebb36
-action_command: ~/katapult/scripts/flashtool.py -u <canbus_uuid>
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -u <canbus_uuid>
 ```
 
 #### Toolchanger : Usb connection
@@ -293,19 +293,19 @@ action_command: ~/katapult/scripts/flashtool.py -u <canbus_uuid>
 ```elixir
 [mcu tool1]
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD1_ID>-if00
-action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD1_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD1_ID>-if00
 
 [mcu tool2]
 # Share menuconfig with mcu tool1
 config_name: mcu tool1
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD2_ID>-if00
-action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD2_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD2_ID>-if00
 
 [mcu toolN]
 # Share menuconfig with mcu tool1
 config_name: mcu_tool1
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARDN_ID>-if00
-action_command: ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARDN_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARDN_ID>-if00
 ```
 
 _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/10)_
@@ -316,7 +316,7 @@ _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues
 [cartographer]
 klipper_section: mcu scanner
 is_klipper_fw: false
-action_command: ~/cartographer-klipper/scripts/firmare.py -d <canbus_uuid> -f CAN
+action_command: ~/cartographer-klipper/scripts/firmware.py -d <canbus_uuid> -f CAN
 
 # Crampon ADXL  
 [crampon]

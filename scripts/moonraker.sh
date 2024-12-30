@@ -28,6 +28,15 @@ function list_mcus() {
   return 0
 }
 
+function get_venv() {
+  if ! moonraker_query printer/info json; then
+    return 1
+  fi
+  parse_json python_path KLIPPER_VENV
+  return 0
+  
+}
+
 function get_mcus_version() {
   # Check if printer info is available
   if ! moonraker_query printer/info json; then

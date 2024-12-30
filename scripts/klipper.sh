@@ -25,6 +25,11 @@ function get_klipper_vars() {
 
 # Check if Klipper venv exists
 function find_klipper_venv() {
+  if get_venv; then
+    echo KLIPPER_VENV
+    return 0
+  fi
+
   local venv_dir="$HOME/klippy-env"
   if [ -d "$venv_dir" ]; then
     echo "$venv_dir/bin/python"
