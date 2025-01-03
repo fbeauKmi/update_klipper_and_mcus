@@ -60,8 +60,19 @@ Do you want to restart ${APP} anyway ?" n; then
 
 function update_klipper() {
   local ERR_PULL=false
-  if [[ $k_local_version == $k_remote_version ]]; then
-    echo -e "${APP} is up to date : ${GREEN}$k_local_version"
+  local local_behind=$(git -C ~/klipper rev-list HEAD..@{u} --count)
+  local local_ahead=$(git -C ~/klipper rev-list @{u}..HEAD --count)
+
+  # Display version & commits
+  echo "Local ${APP} version $k_local_version"
+  echo "Latest ${APP} version $k_remote_version"
+  echo "${local_behind} commit(s) behind repo"
+  [ $local_ahead -ne 0 ] && \
+    echo -e "${RED}Local repo has diverged with ${local_ahead} commit(s)" \
+    " ahead${DEFAULT}"
+
+  if [ $local_behind -eq 0 ]; then
+    echo -e "${APP} is up to date"
     echo "$k_repo $k_fullbranch${DEFAULT}"
   else
     # Fail if repo is dirty
@@ -72,15 +83,7 @@ function update_klipper() {
       git -C ~/klipper status --short
       ERR_PULL=true
     else
-      # Display version & commits
-      echo "Local ${APP} version $k_local_version"
-      echo "Latest ${APP} version $k_remote_version"
-      local_behind=$(git -C ~/klipper rev-list HEAD..@{u} --count)
-      local_ahead=$(git -C ~/klipper rev-list @{u}..HEAD --count)
-      echo "${local_behind} commit(s) behind repo"
-      [ $local_ahead -ne 0 ] && \
-        echo -e "${RED}Local repo has diverged with ${local_ahead} commit(s)" \
-        " ahead${default}"
+      
       # Pull repo
       if [[ "$CHECK" == false ]]; then
         echo "Updating ${APP} from $k_repo $k_fullbranch"
@@ -100,9 +103,12 @@ function update_klipper() {
         fi
         set -E
 
-        [ $exit_status -eq 0 ] && store_rollback_version && \
-          k_local_version=$k_remote_version || ERR_PULL=true
-  
+        if [ $exit_status -eq 0 ]; then
+          store_rollback_version
+          k_local_version=$(git -C ~/klipper describe --tags --always --long)
+        else
+          ERR_PULL=true
+        fi
       else
         echo -e "  ${BLUE}$k_repo " \
           "$k_fullbranch${DEFAULT}"
