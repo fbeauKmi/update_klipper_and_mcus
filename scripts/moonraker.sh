@@ -40,10 +40,12 @@ function get_venv() {
 function get_mcus_version() {
   # Check if printer info is available
   if ! moonraker_query printer/info json; then
-    echo -e "${RED}Failed to query Moonraker. Unable to collect Klipper " \
+    echo -e "${RED}Failed to query Moonraker. Unable to collect" \
     "infos on mcus${DEFAULT}"
     return 0
   fi
+  
+  parse_json app APP
 
   parse_json state printer_state
   # Abort if printer is startup or error

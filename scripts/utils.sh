@@ -8,6 +8,7 @@ UKAM: a Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default 'mcus.ini'
   -c, --checkonly   Check if Klipper is up to date only.
+  -b, --rebase      use rebase instead of fast forward to update Klipper
   -f, --firmware    Do not merge repo, force to update firmwares
   -m, --menuconfig  Show menuconfig for all Mcus (default is to not show)
   -r, --rollback    Rollback to a previous version

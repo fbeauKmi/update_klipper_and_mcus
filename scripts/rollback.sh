@@ -26,7 +26,7 @@ function show_rollback {
     $rollback_version != $k_local_version ]]; then
     if [[ $rollback_repo == "" ||
       $rollback_repo == "$k_repo $k_fullbranch" ]]; then
-      echo "Current Klipper version $k_local_version"
+      echo "Current ${APP} version $k_local_version"
       echo "Known rollback version $rollback_version"
       DO_ROLLBACK=true
     else
