@@ -1,5 +1,7 @@
 ![UKAM_Banner](./images/banner.png)
-# **UKAM : Update Klipper And Mcus** all-at-once.
+# **UKAM : Update Klipper[^1] And Mcus** all-at-once.
+
+[^1]: Works with Kalico too
 
 > [!WARNING]
 > ### Do not update mcu firmwares with every commit!
@@ -46,6 +48,7 @@ This is small bash script to update klipper and mcus (main, rpi, can, pico, ... 
     - [Mainboard : USB connection](#mainboard--usb-connection)
     - [Toolhead : CANbus (Katapult required)](#toolhead--canbus-katapult-required)
     - [Toolchanger : USB connection](#toolchanger--usb-connection)
+    - [Non Klipper firmwares](#non-klipper-firmwares)
 - [About backup](#about-backup)
 - [Questions & Answers](#qa)
 - [TODO](#todo)
@@ -136,9 +139,10 @@ UKAM, a Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default is 'mcus.ini'
   -c, --checkonly            Check if Klipper is up to date only.
-  -f, --firmware             Do not merge repo, update firmware only
+  -b, --rebase               use rebase instead of fast forward to update Klipper
+  -f, --firmware             Do not merge repo, force to update firmwares
   -m, --menuconfig           Show menuconfig for all Mcus (default do not show menuconfig)
-  -r, --rollback             Rollback to previous installed version (Only if UKAM was used)
+  -r, --rollback             Rollback to a previous version
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
   -v, --verbose              For debug purpose, display parsed config
   -h, --help                 Display this help message and exit
