@@ -59,46 +59,59 @@ Do you want to restart ${APP} anyway ?" n; then
 }
 
 function update_klipper() {
-
+  local ERR_PULL=false
   if [[ $k_local_version == $k_remote_version ]]; then
     echo -e "${APP} is up to date : ${GREEN}$k_local_version"
     echo "$k_repo $k_fullbranch${DEFAULT}"
   else
+    # Fail if repo is dirty
     if [[ "$k_local_version" == *"dirty"* ]]; then
       echo -e "${RED}${APP} repo is dirty, try to solve this before " \
         "update${DEFAULT}"
       echo "Conflict(s) to solve : "
       git -C ~/klipper status --short
-      if ! prompt "Do you want to flash firmware on boards anyway ?" n; then
-        TOUPDATE=false
-        ERROR=true
-      fi
+      ERR_PULL=true
     else
-      echo "Current ${APP} version $k_local_version"
-      echo "Next ${APP} version $k_remote_version"
-      nb_commit=$(git rev-list HEAD..@{u} --count)
-      echo "${nb_commit} commit(s) behind repo" 
-      if ! $CHECK; then
+      # Display version & commits
+      echo "Local ${APP} version $k_local_version"
+      echo "Latest ${APP} version $k_remote_version"
+      local_behind=$(git -C ~/klipper rev-list HEAD..@{u} --count)
+      local_ahead=$(git -C ~/klipper rev-list @{u}..HEAD --count)
+      echo "${local_behind} commit(s) behind repo"
+      [ $local_ahead -ne 0 ] && \
+        echo -e "${RED}Local repo has diverged with ${local_ahead} commit(s)" \
+        " ahead${default}"
+      # Pull repo
+      if [[ "$CHECK" == false ]]; then
         echo "Updating ${APP} from $k_repo $k_fullbranch"
-        # Store previous version
-        store_rollback_version
-
+        
+        set +E
         git_output=$(git -C ~/klipper pull $git_option 2>&1) # Capture stdout
         exit_status=$?
 
+        # prompt to rebase if git pull fails
         if [ $exit_status -ne 0 ] || echo "$git_output" | grep -q "error"; then
           echo -e "${RED}Git pull failed:${DEFAULT} $git_output"
-          [ $nb_commit -eq "0" ] && [[ "$git_option" != "--rebase" ]] && 
+          [ $local_ahead -ne 0 ] && [[ "$git_option" != "--rebase" ]] && 
             prompt "Do you want to rebase to update ${APP} ?" y &&
             git_output=$(git -C ~/klipper pull --rebase 2>&1)
           exit_status=$?
           ERROR=false
         fi
-        [ $exit_status -eq 0 ] && k_local_version=$k_remote_version
+        set -E
+
+        [ $exit_status -eq 0 ] && store_rollback_version && \
+          k_local_version=$k_remote_version || ERR_PULL=true
+  
       else
-        echo -e "${APP} can be updated\n ${BLUE}$k_repo " \
+        echo -e "  ${BLUE}$k_repo " \
           "$k_fullbranch${DEFAULT}"
       fi
     fi
+  fi
+  if [[ "$ERR_PULL" == true ]] && \
+    ! prompt "Do you want to flash firmware on mcus anyway ?" n; then
+    TOUPDATE=false
+    ERROR=true
   fi
 }
