@@ -106,6 +106,8 @@ QUIET=false
 ROLLBACK=false
 TOUPDATE=true
 VERBOSE=false
+git_option="--ff-only"
+APP="Klipper"
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -114,6 +116,7 @@ while [[ $# -gt 0 ]]; do
     CHECK=true
     TOUPDATE=false
     ;;
+  -b | --rebase) git_option="--rebase";;
   -f | --firmware) FIRMWAREONLY=true ;;
   -h | --help) HELP=true ;;
   -m | --menuconfig) MENUCONFIG=true ;;
