@@ -70,11 +70,11 @@ function main() {
   if ! $FIRMWAREONLY; then
     :
     if $ROLLBACK; then
-      echo -e "\n${BLUE}-- Rollback Klipper updates --${DEFAULT}"
+      echo -e "\n${BLUE}-- Rollback ${APP} updates --${DEFAULT}"
       show_rollback
       do_rollback
     else
-      echo -e "\n${BLUE}-- Check and apply Klipper updates --${DEFAULT}"
+      echo -e "\n${BLUE}-- Check and apply ${APP} updates --${DEFAULT}"
       update_klipper
     fi
   fi
