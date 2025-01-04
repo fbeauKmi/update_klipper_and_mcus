@@ -25,11 +25,16 @@ function get_klipper_vars() {
 
 # Check if Klipper venv exists
 function find_klipper_venv() {
+  if get_venv; then
+    echo KLIPPER_VENV
+    return 0
+  fi
+
   local venv_dir="$HOME/klippy-env"
   if [ -d "$venv_dir" ]; then
     echo "$venv_dir/bin/python"
   else
-    error_exit "Klipper virtual-env not found at $venv_dir"
+    error_exit "virtual-env not found at $venv_dir"
   fi
 }
 
@@ -44,40 +49,72 @@ function klipperservice {
   [[ "$1" = "start" ]] && str="ing" && $klipperrunning && return 0
   [[ "$1" = "stop" ]] && str="ping" && ! $klipperrunning && return 0
   klipperrunning=false
-  echo -e "${RED}${1^}$str Klipper service${DEFAULT}"
+  if $ERROR && ! prompt "${RED}An error occured !
+Do you want to restart ${APP} anyway ?" n; then
+   return 0
+  fi
+  echo -e "${YELLOW}${1^}$str Klipper service${DEFAULT}"
   sudo service klipper $1
   return 0
 }
 
 function update_klipper() {
+  local ERR_PULL=false
+  local local_behind=$(git -C ~/klipper rev-list HEAD..@{u} --count)
+  local local_ahead=$(git -C ~/klipper rev-list @{u}..HEAD --count)
 
-  if [[ $k_local_version == $k_remote_version ]]; then
-    echo -e "Klipper is up to date : ${GREEN}$k_local_version"
-    echo "$k_repo $k_fullbranch${DEFAULT}"
+  # Display version & commits
+  echo -e "Origin: ${BLUE}$k_repo $k_fullbranch${DEFAULT}"
+  echo "Local version $k_local_version"
+  echo "Latest version $k_remote_version"
+  echo "${local_behind} commit(s) behind repo"
+  [ $local_ahead -ne 0 ] && \
+    echo -e "${RED}Local repo has diverged with ${local_ahead} commit(s)" \
+    " ahead${DEFAULT}"
+
+  if [ $local_behind -eq 0 ]; then
+    echo -e "${GREEN}${APP} is up to date${DEFAULT}"
   else
+    # Fail if repo is dirty
     if [[ "$k_local_version" == *"dirty"* ]]; then
-      echo -e "${RED}Klipper repo is dirty, try to solve this before " \
+      echo -e "${RED}${APP} repo is dirty, try to solve this before " \
         "update${DEFAULT}"
       echo "Conflict(s) to solve : "
       git -C ~/klipper status --short
-      TOUPDATE=false
+      ERR_PULL=true
     else
-      echo "Current Klipper version $k_local_version"
-      echo "Next Klipper version $k_remote_version"
-      echo "$(git -C ~/klipper shortlog HEAD..origin/master |
-        grep -E '^[ ]+\w+' |
-        wc -l) commit(s)  behind repo"
-      if ! $CHECK; then
-        echo "Updating Klipper from $k_repo $k_fullbranch"
-        # Store previous version
-        store_rollback_version
+      
+      # Pull repo
+      if [[ "$CHECK" == false ]]; then
+        echo "Updating ${APP} from $k_repo $k_fullbranch"
+        
+        set +E
+        git_output=$(git -C ~/klipper pull $git_option 2>&1) # Capture stdout
+        exit_status=$?
 
-        git_output=$(git -C ~/klipper pull --ff-only) # Capture stdout
-        k_local_version=$k_remote_version
-      else
-        echo -e "Klipper can be updated\n ${BLUE}$k_repo " \
-          "$k_fullbranch${DEFAULT}"
+        # prompt to rebase if git pull fails
+        if [ $exit_status -ne 0 ] || echo "$git_output" | grep -q "error"; then
+          echo -e "${RED}Git pull failed:${DEFAULT} $git_output"
+          [ $local_ahead -ne 0 ] && [[ "$git_option" != "--rebase" ]] && 
+            prompt "Do you want to rebase to update ${APP} ?" y &&
+            git_output=$(git -C ~/klipper pull --rebase 2>&1)
+          exit_status=$?
+          ERROR=false
+        fi
+        set -E
+
+        if [ $exit_status -eq 0 ]; then
+          store_rollback_version
+          k_local_version=$(git -C ~/klipper describe --tags --always --long)
+        else
+          ERR_PULL=true
+        fi
       fi
     fi
+  fi
+  if [[ "$ERR_PULL" == true ]] && \
+    ! prompt "Do you want to flash firmware on mcus anyway ?" n; then
+    TOUPDATE=false
+    ERROR=true
   fi
 }

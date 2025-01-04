@@ -8,11 +8,12 @@ UKAM: a Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default 'mcus.ini'
   -c, --checkonly   Check if Klipper is up to date only.
-  -f, --firmware    Do not merge repo, update firmware only
-  -m, --menuconfig  Show menuconfig for all Mcus (default is tonot show)
+  -b, --rebase      use rebase instead of fast forward to update Klipper
+  -f, --firmware    Do not merge repo, force to update firmwares
+  -m, --menuconfig  Show menuconfig for all Mcus (default is to not show)
   -r, --rollback    Rollback to a previous version
   -q, --quiet       Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
-  -v, --verbose     For debug purpose, display parsed config
+  -v, --verbose     For debug purpose, show parsed config
   -h, --help        Display this help message and exit
 EOF
 }
@@ -27,6 +28,9 @@ LIGHT_MAGENTA=$'\033[1;35m'
 CYAN=$'\033[0;36m'
 WHITE=$'\033[0;37m'
 DEFAULT=$'\033[0m'
+
+# Error handler
+ERROR=false
 
 # Define a function to prompt the user with a y/n question
 prompt() {
@@ -55,7 +59,8 @@ function error_exit() {
 
 # Handle unexpected error() {
 function handle_error() {
-  IFS=" "; error_exit Unexpected error $*
+  ERROR=true
+  echo -e "${RED}!!Error: Unexpected error $*${DEFAULT}" >&2
 }
 # Function to enter bootloader mode
 # Usage  : enter_bootloader -t [type:usb|serial|can] -d [serial]

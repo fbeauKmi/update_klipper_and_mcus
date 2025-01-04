@@ -22,19 +22,30 @@ function list_mcus() {
   local pattern=$( IFS='|'; echo "${klipper_section[*]}" ) # build pattern
   IFS=';'
   # Use mapfile to read the output of grep and sed directly into an array
-  mapfile -t result < <(echo "$json" | grep -oP '"('$pattern')"' | sed 's/"//g')
+  mapfile -t result < <(echo "$json" | grep -oP '"(mcu|'$pattern')"' | sed 's/"//g')
 
   [[ ${#result[@]} -eq 0 ]] && return 1
   return 0
 }
 
+function get_venv() {
+  if ! moonraker_query printer/info json; then
+    return 1
+  fi
+  parse_json python_path KLIPPER_VENV
+  return 0
+  
+}
+
 function get_mcus_version() {
   # Check if printer info is available
   if ! moonraker_query printer/info json; then
-    echo -e "${RED}Failed to query Moonraker. Unable to collect Klipper " \
+    echo -e "${RED}Failed to query Moonraker. Unable to collect" \
     "infos on mcus${DEFAULT}"
     return 0
   fi
+  
+  parse_json app APP
 
   parse_json state printer_state
   # Abort if printer is startup or error
