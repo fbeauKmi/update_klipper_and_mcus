@@ -22,7 +22,7 @@ function show_rollback {
 
   get_rollback $ukam_config/config/.previous_version
 
-  echo "Current ${APP} version $k_local_version"
+  echo "Local version $k_local_version"
   if [[ $rollback_version != "" &&
     $rollback_version != $k_local_version ]]; then
     if [[ $rollback_repo == "" ||

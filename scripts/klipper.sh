@@ -64,16 +64,16 @@ function update_klipper() {
   local local_ahead=$(git -C ~/klipper rev-list @{u}..HEAD --count)
 
   # Display version & commits
-  echo "Local ${APP} version $k_local_version"
-  echo "Latest ${APP} version $k_remote_version"
+  echo -e "Origin: ${BLUE}$k_repo $k_fullbranch${DEFAULT}"
+  echo "Local version $k_local_version"
+  echo "Latest version $k_remote_version"
   echo "${local_behind} commit(s) behind repo"
   [ $local_ahead -ne 0 ] && \
     echo -e "${RED}Local repo has diverged with ${local_ahead} commit(s)" \
     " ahead${DEFAULT}"
 
   if [ $local_behind -eq 0 ]; then
-    echo -e "${APP} is up to date"
-    echo "$k_repo $k_fullbranch${DEFAULT}"
+    echo -e "${GREEN}${APP} is up to date${DEFAULT}"
   else
     # Fail if repo is dirty
     if [[ "$k_local_version" == *"dirty"* ]]; then
@@ -109,9 +109,6 @@ function update_klipper() {
         else
           ERR_PULL=true
         fi
-      else
-        echo -e "  ${BLUE}$k_repo " \
-          "$k_fullbranch${DEFAULT}"
       fi
     fi
   fi
