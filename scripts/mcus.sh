@@ -35,8 +35,7 @@ function load_mcus_config() {
         klipper_section["$section"]=$section
         config_name["$section"]=$section
         mcu_version["$section"]=unknown
-        is_klipper_fw["$section"]=false
-        [[ "$section" =~ ^mcu\s* ]] && is_klipper_fw["$section"]=true
+        is_klipper_fw["$section"]=true
         ;;
       flash_command | quiet_command | action_command)
         # Make command quiet, except for stderr, when needed
