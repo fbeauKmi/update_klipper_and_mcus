@@ -139,8 +139,8 @@ function update_mcus() {
       config_file_str="KCONFIG_CONFIG=$config_path"
       # showmenu
       if [[ ! -f $config_path ]]; then
-        $QUIET && error_exit "${1^} No config file for $mcu_str in " \
-          "$ukam_config/config \nDon't use quiet mode on first " \
+        $QUIET && error_exit "${1^} No config file for $mcu_str in" \
+          "$ukam_config/config \nDon't use quiet mode on first" \
           "firmware update!"
         SHOW_MENUCFG=true
       fi
@@ -169,7 +169,7 @@ function update_mcus() {
       if $SHARED_CONFIG; then
         while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|\
 # CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
-          echo -e "${RED}Forged Serial/CanBus ID is incompatible with " \
+          echo -e "${RED}Forged Serial/CanBus ID is incompatible with" \
             "config_name option.${DEFAULT}"
           if prompt "Change menuconfig now ?"; then
             make menuconfig $config_file_str

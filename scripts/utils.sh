@@ -80,22 +80,22 @@ function enter_bootloader() {
     t) type=$(echo "$OPTARG" | tr '[:upper:]' '[:lower:]') ;;
     d) serial="$OPTARG" ;;
     b) baudrate="$OPTARG" ;;
-    \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t " \
+    \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t" \
       "<usb|serial|can> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
-    :) error_exit "Option -$OPTARG requires an argument. Usage: " \
-      "enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | " \
+    :) error_exit "Option -$OPTARG requires an argument. Usage:" \
+      "enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] |" \
       "-u <canbus_uuid>" ;;
     esac
   done
 
   # Check if required arguments are provided
   if [[ -z "$type" ]]; then
-    error_exit "Type argument is missing. Usage: enter_bootloader " \
+    error_exit "Type argument is missing. Usage: enter_bootloader" \
       "-t <usb|serial> -d <serial> [-b baudrate]"
   fi
 
   if [[ -z "$serial" ]]; then
-    error_exit "Serial argument is missing. Usage: enter_bootloader " \
+    error_exit "Serial argument is missing. Usage: enter_bootloader" \
       "-t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>"
   fi
 
