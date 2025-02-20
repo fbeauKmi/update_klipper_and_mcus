@@ -182,7 +182,7 @@ function update_mcus() {
       # Check CPU thread number (added by @roguyt to build faster)
       CPUS=$(grep -c ^processor /proc/cpuinfo)
       if $QUIET; then
-        make -j $CPUS $config_file_str &>/dev/null
+        make -j $CPUS $config_file_str > /dev/null
       else
         make -j $CPUS $config_file_str
       fi
