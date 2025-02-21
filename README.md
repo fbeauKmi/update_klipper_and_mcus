@@ -1,7 +1,7 @@
 ![UKAM_Banner](./images/banner.png)
-# **UKAM : Update Klipper[^1] And Mcus** all-at-once.
+# **UKAM v0.0.6** (Funky Fireworks)
 
-[^1]: Works with Kalico too
+[^1]: Update Klipper And Mcus all-at-once.Works with Kalico too
 
 > [!WARNING]
 > ### Do not update mcu firmwares with every commit!
@@ -15,20 +15,17 @@
 This is small bash script to update klipper and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 
 > [!NOTE]
-> The version 0.0.5 of the script introduces major changes:
-> - `ukam.sh` replaces `update_klipper.sh`
-> - `ukam.sh` need also `./scripts` folder in order to work properly
-> - Ukam config folder is `~/printer_data/config/ukam`, easier to edit & backup
-> - `--rollback` allows to revert to any commit
-> - Menuconfig does not appear for boards already configured.
+> The actual version is tagged 0.0.6.
+>
+> Changes :
+> - Improve verbose mode,
+> - Error handling allows interactions instead of leaving script,
+> - Rework config parser,
+> - Klipper update : Ask to rebase if `git pull` fails,
+> - `-c` option is allowed when printing.
 > 
 > Fixes:
-> - space character is allowed in section name
-> - klipper service is only stopped when needed 
-> 
-> However your old `mcus.ini` is still compatible with the reworked script.
-> Just add `klipper_section` for each mcu, in order to check firmware version
-> on the board. see [Edit mcus.ini](#edit-mcusini)
+> - typos.
 
 ## Table of Contents 
 - [Disclaimer](#disclaimer)<!-- omit in toc -->
