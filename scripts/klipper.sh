@@ -87,21 +87,26 @@ function update_klipper() {
       # Pull repo
       if [[ "$CHECK" == false ]]; then
         echo "Updating ${APP} from $k_repo $k_fullbranch"
-        
+        # Disable error trap to handle git pull error
         set +E
+        trap - ERR
+        
         git_output=$(git -C ~/klipper pull $git_option 2>&1) # Capture stdout
         exit_status=$?
+
+        # re-enable error trap
+        set -E
+        trap 'handle_error $?' ERR
 
         # prompt to rebase if git pull fails
         if [ $exit_status -ne 0 ] || echo "$git_output" | grep -q "error"; then
           echo -e "${RED}Git pull failed:${DEFAULT} $git_output"
           [ $local_ahead -ne 0 ] && [[ "$git_option" != "--rebase" ]] && 
-            prompt "Do you want to rebase to update ${APP} ?" y &&
+            prompt "Do you want to rebase to update ${APP} ?" n &&
             git_output=$(git -C ~/klipper pull --rebase 2>&1)
           exit_status=$?
           ERROR=false
         fi
-        set -E
 
         if [ $exit_status -eq 0 ]; then
           store_rollback_version

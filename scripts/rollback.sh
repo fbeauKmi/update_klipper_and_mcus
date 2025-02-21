@@ -44,7 +44,7 @@ function do_rollback() {
   TOUPDATE=false
   if $DO_ROLLBACK; then
     if [[ "$k_local_version" == *"dirty"* ]]; then
-      echo -e "${RED}WARNING : Rollback a dirty repo will erase " \
+      echo -e "${RED}WARNING : Rollback a dirty repo will erase" \
         "untracked files.${DEFAULT}"
     fi
     if ! prompt "Rollback to $rollback_version ?"; then

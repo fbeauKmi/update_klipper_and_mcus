@@ -37,15 +37,16 @@ prompt() {
   local default="Yn"
   [ $# -eq 2 ] && [ ${2^} = "N" ] && default="yN"
 
-  if $QUIET; then return 0; fi
+  # In quiet mode skip prompt and return default value
+  $QUIET && { [ $default = "yN" ] && return 1 || return 0; }  
   while true; do
     read -p "${MAGENTA}$1 [$default]: ${DEFAULT}" yn
     case $yn in
     [Yy]*) return 0 ;;
     "")
       [ $default = "yN" ] && return 1 # Return 1 if N, 0 if Y is default
-      return 0
-      ;; # Return 0 on Enter key press (Y as default)
+      return 0 # Return 0 on Enter key press (Y as default)
+      ;; 
     [Nn]*) return 1 ;;
     esac
   done
@@ -61,6 +62,7 @@ function error_exit() {
 function handle_error() {
   ERROR=true
   echo -e "${RED}!!Error: Unexpected error $*${DEFAULT}" >&2
+  $QUIET && exit 1  # Exit on any error if in quiet mode
 }
 # Function to enter bootloader mode
 # Usage  : enter_bootloader -t [type:usb|serial|can] -d [serial]
@@ -80,22 +82,22 @@ function enter_bootloader() {
     t) type=$(echo "$OPTARG" | tr '[:upper:]' '[:lower:]') ;;
     d) serial="$OPTARG" ;;
     b) baudrate="$OPTARG" ;;
-    \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t " \
+    \?) error_exit "Invalid option -$OPTARG. Usage: enter_bootloader -t" \
       "<usb|serial|can> -d <serial> [-b baudrate] | -u <canbus_uuid>" ;;
-    :) error_exit "Option -$OPTARG requires an argument. Usage: " \
-      "enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] | " \
+    :) error_exit "Option -$OPTARG requires an argument. Usage:" \
+      "enter_bootloader -t <usb|serial> -d <serial> [-b baudrate] |" \
       "-u <canbus_uuid>" ;;
     esac
   done
 
   # Check if required arguments are provided
   if [[ -z "$type" ]]; then
-    error_exit "Type argument is missing. Usage: enter_bootloader " \
+    error_exit "Type argument is missing. Usage: enter_bootloader" \
       "-t <usb|serial> -d <serial> [-b baudrate]"
   fi
 
   if [[ -z "$serial" ]]; then
-    error_exit "Serial argument is missing. Usage: enter_bootloader " \
+    error_exit "Serial argument is missing. Usage: enter_bootloader" \
       "-t <usb|serial> -d <serial> [-b baudrate] | -u <canbus_uuid>"
   fi
 
