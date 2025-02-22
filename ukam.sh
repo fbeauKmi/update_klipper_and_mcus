@@ -17,7 +17,7 @@
 
 # Exit on error
 set -E
-trap 'handle_error $?' ERR
+trap 'handle_error $LINENO' ERR
 # Get Current script fullpath
 ukam_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Config_path

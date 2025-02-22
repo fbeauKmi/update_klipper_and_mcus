@@ -11,9 +11,11 @@ function moonraker_query() {
 
 function parse_json() {
   local value=$(echo "$json" | grep -o "\"$1\":[ ]*\"[^\"]*" | cut -d'"' -f4)
-  # Use eval to assign the value to the variable name passed as $3
-  [[ -z "$value" ]] && return 1
-  eval "$2=\"$value\""
+  # Use eval to assign the value to the variable name passed as $2
+  # if value doesn't exist, assign $3
+  # if $3 is not set, return 1
+  [ -z "$value" ] && [ -z "$3" ] && return 1
+  eval "$2=\"${value:-$3}\""
   return 0
 }
 
@@ -45,9 +47,9 @@ function get_mcus_version() {
     return 0
   fi
   
-  parse_json app APP
+  parse_json app APP "Klipper"
 
-  parse_json state printer_state
+  parse_json state printer_state "error"
   # Abort if printer is startup or error
   if [[ $printer_state =~ ^(startup)$ ]]; then
     echo -e "${RED}Klippy state: ${printer_state}.${DEFAULT} Unable to" \
@@ -61,7 +63,7 @@ function get_mcus_version() {
     "collect mcus firmware version"
     return 0
   fi  
-  parse_json state klipper_state
+  parse_json state klipper_state "error"
   if [[ ! $CHECK && $klipper_state =~ ^(printing|paused)$ ]]; then
     error_exit "Printer is not ready (${klipper_state}) ! YOU MUST NOT" \
     "UPDATE MCUS PRINTING !"
@@ -75,10 +77,11 @@ function get_mcus_version() {
     "to list mcus"
     return 0
   fi
-
+    
   for mcu in "${mcus[@]}"; do
     moonraker_query "printer/objects/query?$mcu" json
-    if ! parse_json mcu_version tmp; then
+    parse_json mcu_version tmp "unknown"
+    if [[ $tmp == "unknown" ]]; then
       echo -e "${RED}Klippy state: ${printer_state}.${DEFAULT} Unable to" \
       "collect ${mcu} firmware version"
       return 0
