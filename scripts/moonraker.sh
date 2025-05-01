@@ -21,7 +21,7 @@ function parse_json() {
 
 function list_mcus() {
   local -n result=$1 # Use nameref for indirect reference
-  local pattern=$( IFS='|'; echo "(mcu )+(${klipper_section[*]})" ) # build pattern
+  local pattern=$( IFS='|'; echo "${klipper_section[*]}" ) # build pattern
   IFS=';'
   # Use mapfile to read the output of grep and sed directly into an array
   mapfile -t result < <(echo "$json" | grep -oP '"(mcu|'$pattern')"' | sed 's/"//g')
@@ -88,8 +88,7 @@ function get_mcus_version() {
     fi
 
     for cmcu in "${mcu_order[@]}"; do
-      mcu_section=${klipper_section["$cmcu"]}
-      if [[ $mcu == "$mcu_section" || $mcu == "mcu ${mcu_section}" ]]; then
+      if [[ $mcu == ${klipper_section["$cmcu"]} ]]; then
         mcu_version["$cmcu"]=$tmp
       fi
     done
