@@ -3,12 +3,20 @@
 
 [^1]: Update Klipper And Mcus all-at-once.Works with Kalico too
 
-> [!WARNING]
-> ### Do not update mcu firmwares with every commit!
+> [!NOTE]
+> ### Good to know.
 > Modern MCUs have limited write cycles (>100K cycles for an EEPROM, about 10K cycles for a STM32 chip). Updating the firmware with each release could shorten the life of your MCU.
 > 
-> ### How often should I use UKAM? 
-> Every time Klipper mentions to update an MCU at startup, no more.
+> ### How often should I use UKAM?
+> UKAM checks the firmware version and skip flashing process if firmware is already
+> up to date.
+>
+> There's often no point to keep firmware version aligned to host version. Major 
+> changes in Klipper come from host code and documentation.
+> 
+> A good workflow should be : _"Check if there are changes in C files that could affect your printer"_
+> or wait for Klipper to ask for firmware update at startup.
+> 
 > ### So why do I need UKAM ?
 > It will make your life easier when Klipper asks you to update your MCUs.
 
@@ -169,6 +177,8 @@ Quiet mode allows you to update all you configure without any interaction. Just 
 `mcus.ini` contains : 
 - sections : the name you give to your mcu between brackets \[\] (not necessarly the name in Klipper config)
 - `klipper_section` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
+> [!NOTE]
+> Entry is case-sensitive. Ensure that the `klipper_section` matches the case of the corresponding name in the Klipper configuration.
 - `config_name` [optional] : The name of the file used by menuconfig. Multiple MCU entries can share the same `config_name`. See [Toolchanger config example](#toolchanger--usb-connection).
 - **NEW** `is_klipper_fw` [optional]: `true|false` Determines whether Klipper firmware should be built. By default, `true` for sections starting with `mcu`, `false` for other section types (e.g., `beacon`, `crampon`, `high_resolution_filament_sensor`, `scanner`, ...). See [Non Klipper firmwares examples](#non-klipper-firmwares)
 - `action_command` [required] : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by `;` or use several action_command in a section, they are executed in order of appearance.
