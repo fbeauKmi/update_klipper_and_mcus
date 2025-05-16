@@ -1,9 +1,11 @@
 ![UKAM_Banner](./images/banner.png)
-# **UKAM v0.0.6** (Funky Fireworks)
+# **UKAM[^1] v0.0.7** (Genuine Glitch)
 
-[^1]: Update Klipper And Mcus all-at-once.Works with Kalico too
+[^1]: Update Klipper And Mcus all-at-once. Works with Kalico too
 
-> [!NOTE]
+UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
+
+> [!WARNING]
 > ### Good to know.
 > Modern MCUs have limited write cycles (>100K cycles for an EEPROM, about 10K cycles for a STM32 chip). Updating the firmware with each release could shorten the life of your MCU.
 > 
@@ -20,23 +22,16 @@
 > ### So why do I need UKAM ?
 > It will make your life easier when Klipper asks you to update your MCUs.
 
-This is small bash script to update klipper and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
-
 > [!NOTE]
-> The actual version is tagged 0.0.6.
+> The actual version is tagged 0.0.7.
 >
-> Changes :
-> - Improve verbose mode,
-> - Error handling allows interactions instead of leaving script,
-> - Rework config parser,
-> - Klipper update : Ask to rebase if `git pull` fails,
-> - `-c` option is allowed when printing.
+> New features :
+> - `klipper_section` can be declared without `mcu` prefix
 > 
 > Fixes:
-> - typos.
+> - fix `is_klipper_fw` does not properly affect if declared prior to `klipper_section`.
 
 ## Table of Contents 
-- [Disclaimer](#disclaimer)<!-- omit in toc -->
 - [What UKAM does ?](#what-ukam-does-)
 - [Installation](#installation)
   - [Method 1 : git clone (recommended)](#method-1--git-clone)
@@ -357,6 +352,11 @@ visible, run the `./ukam.sh` again.
 
 **Q: Does UKAM update Katapult ?** \
 A : No, there's no point to update the bootloader.
+
+**Q: Why does UKAM show that an error occurred, but the flash seemed to work?** \
+A : In USB mode, `dfu-util` always returns an error code, even if flash is successful.
+There's no way to get rid of this error. You can use another flashing method (_ie katapult_) 
+to counterwork the error.  
 
 ## TODO
 Not to much, the script works. If you have any suggestions feel free to contact me on Voron discord @fboc

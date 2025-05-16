@@ -32,10 +32,8 @@ function load_mcus_config() {
         # Store the order of MCUs in mcu_order array
         mcu_order+=("$section")
         # Set default values
-        klipper_section["$section"]=$section
         config_name["$section"]=$section
         mcu_version["$section"]=unknown
-        is_klipper_fw["$section"]=true
         ;;
       flash_command | quiet_command | action_command)
         # Make command quiet, except for stderr, when needed
@@ -52,8 +50,6 @@ function load_mcus_config() {
         ;;
       klipper_section)
         klipper_section["$section"]=$value
-        is_klipper_fw["$section"]=false
-        [[ "$value" =~ ^mcu\s* ]] && is_klipper_fw["$section"]=true
         ;;
       config_name)
         config_name["$section"]=$value
@@ -81,6 +77,13 @@ function load_mcus_config() {
       if [[ -z "${flash_actions[$mcu]}" ]]; then
         error_exit "No action found for $mcu, check documentation"
       fi
+      # Set default values for klipper_section and is_klipper_fw
+      if [[ -z "${klipper_section[$mcu]}" ]]; then
+        klipper_section["$mcu"]=$mcu
+        if [[ -z "${is_klipper_fw[$mcu]}" ]]; then
+          is_klipper_fw["$mcu"]=true
+        fi
+      fi
     done
 
     return 0
@@ -88,11 +91,22 @@ function load_mcus_config() {
   error_exit "$filename does not exist, unable to update"
 }
 
+function set_is_klipper_fw() {
+  mcu=$1
+  if [[ -z ${is_klipper_fw["$mcu"]} ]]; then
+          is_klipper_fw["$mcu"]=false
+          if [[ "${klipper_section["$mcu"]}" =~ ^mcu\s* ]]; then
+            is_klipper_fw["$mcu"]=true
+          fi
+  fi
+}
+
 # show config datas
 function show_config() {
   if $VERBOSE; then
       echo -e "\n${BLUE}------- mcu datas -------${DEFAULT}"
       for mcu in "${mcu_order[@]}"; do
+        set_is_klipper_fw "$mcu"
         echo -e "${RED}[$mcu]${DEFAULT}" \
           "\n ${GREEN}config_name:${DEFAULT} ${config_name[$mcu]}" \
           "\n ${GREEN}klipper_section:${DEFAULT} ${klipper_section[$mcu]}" \
@@ -108,6 +122,8 @@ function show_config() {
 function update_mcus() {
   # Loop over the keys (MCUs) in the flash_actions array
   for mcu in "${mcu_order[@]}"; do
+    set_is_klipper_fw "$mcu"
+    
     # Initiate variables for current mcu
     SHOW_MENUCFG=$MENUCONFIG
     SHARED_CONFIG=false
