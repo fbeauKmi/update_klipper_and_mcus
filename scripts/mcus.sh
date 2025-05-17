@@ -144,7 +144,7 @@ function update_mcus() {
       elif [ -n $version ]; then
         echo -e "$mcu_str version is ${GREEN}${version}" \
           "${DEFAULT} => ${GREEN}$k_local_version${DEFAULT}."
-        [ "$version" \> $k_local_version ] && def=n \
+        [ $(printf '%s\n' "$version" "$k_local_version" | sort -V | tail -n1) == "$version" ] && def=n \
           && echo -e "${RED}You gonna flash an older firmware !${DEFAULT}"
       fi
       
