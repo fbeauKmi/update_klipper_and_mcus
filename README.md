@@ -1,9 +1,21 @@
+> [!CAUTION] 
+> ## To RP2040 users
+> The addition of RP2350, introduced by https://github.com/Klipper3d/klipper/pull/6725, causes corruption in the config file stored by UKAM. This occurs because the new RP2350 implementation modifies the way configuration data is handled, leading to incompatibilities with existing config file.
+>
+> To avoid issues, run UKAM with the menuconfig option next time. 
+> ```
+> ./ukam.sh -m
+> ```
+> This will allow you to review and adjust the MCU configuration settings, such as selecting the correct board type or communication interface.
+
+
 ![UKAM_Banner](./images/banner.png)
 # **UKAM[^1] v0.0.7** (Genuine Glitch)
 
 [^1]: Update Klipper And Mcus all-at-once. Works with Kalico too
 
 UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
+> 
 
 > [!WARNING]
 > ### Good to know.
@@ -261,7 +273,7 @@ action_command: make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<BO
 klipper_section: mcu
 # With katapult as bootloader
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD_ID>-if00
 
 ```
 _source: Cannot remember_ lol ;)
@@ -299,19 +311,19 @@ action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -u <can
 ```elixir
 [mcu tool1]
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD1_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD1_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD1_ID>-if00
 
 [mcu tool2]
 # Share menuconfig with mcu tool1
 config_name: mcu tool1
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD2_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD2_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD2_ID>-if00
 
 [mcu toolN]
 # Share menuconfig with mcu tool1
 config_name: mcu_tool1
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARDN_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtools.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARDN_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARDN_ID>-if00
 ```
 
 _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/10)_
