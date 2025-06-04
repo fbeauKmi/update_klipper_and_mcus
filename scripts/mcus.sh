@@ -9,6 +9,8 @@ declare -A is_klipper_fw
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
 mcu_order=()
 
+BUILD_ERROR=False
+
 # Define a function to initialize the flash_actions array from the config file
 function load_mcus_config() {
   filename=${CONFIG:-$ukam_config/mcus.ini}
@@ -194,7 +196,9 @@ function update_mcus() {
           fi
         done
       fi
-
+      
+      BUILD_ERROR=false
+      trap 'build_error $LINENO' ERR
       # Check CPU thread number (added by @roguyt to build faster)
       CPUS=$(grep -c ^processor /proc/cpuinfo)
       if $QUIET; then
@@ -202,9 +206,10 @@ function update_mcus() {
       else
         make -j $CPUS $config_file_str
       fi
+      trap 'handle_error $LINENO' ERR
     fi
 
-    if ! $SHOW_MENUCFG || prompt "Errors? Press [Y] to flash $mcu_str"; then
+    if ! $BUILD_ERROR && { ! $SHOW_MENUCFG || prompt "Press [Y] to flash $mcu_str"; }; then
       # Split the flash command string into separate commands and run each one
       IFS=";" read -ra commands <<<"${flash_actions["$mcu"]}"
       for command in "${commands[@]}"; do
@@ -220,4 +225,11 @@ function update_mcus() {
     fi
   done
   return 0
+}
+
+# Handle build error() {
+function build_error() {
+  BUILD_ERROR=true
+  echo -e "${RED}!!Error: Firmware build failed. Skip flash process $*${DEFAULT}\n" >&2
+  $QUIET && exit 1  # Exit on any error if in quiet mode
 }
