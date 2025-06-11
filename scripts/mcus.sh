@@ -6,6 +6,7 @@ declare -A klipper_section
 declare -A mcu_version
 declare -A config_name
 declare -A is_klipper_fw
+declare -A mcu_app
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
 mcu_order=()
 
@@ -36,6 +37,7 @@ function load_mcus_config() {
         # Set default values
         config_name["$section"]=$section
         mcu_version["$section"]=unknown
+        mcu_app["$section"]=unknown
         ;;
       flash_command | quiet_command | action_command)
         # Make command quiet, except for stderr, when needed
@@ -112,6 +114,7 @@ function show_config() {
         echo -e "${RED}[$mcu]${DEFAULT}" \
           "\n ${GREEN}config_name:${DEFAULT} ${config_name[$mcu]}" \
           "\n ${GREEN}klipper_section:${DEFAULT} ${klipper_section[$mcu]}" \
+          "\n ${GREEN}mcu_app:${DEFAULT} ${mcu_app[$mcu]}" \
           "\n ${GREEN}mcu_version:${DEFAULT} ${mcu_version[$mcu]}" \
           "\n ${GREEN}is_klipper_fw:${DEFAULT} ${is_klipper_fw[$mcu]}" \
           "\n ${GREEN}commands:${DEFAULT} ${flash_actions[$mcu]}\n"  
@@ -144,10 +147,12 @@ function update_mcus() {
           && continue
         def=n
       elif [ -n $version ]; then
-        echo -e "$mcu_str version is ${GREEN}${version}" \
-          "${DEFAULT} => ${GREEN}$k_local_version${DEFAULT}."
-        printf '%s\n' "$k_local_version" "$version" | sort -V -C && def=n \
-          && echo -e "${RED}You gonna flash an older firmware !${DEFAULT}"
+        echo -e "$mcu_str version is ${GREEN}${version}(${mcu_app[$mcu]})" \
+          "${DEFAULT} => ${GREEN}$k_local_version(${APP})${DEFAULT}."
+        if [[ "${mcu_app[$mcu]}" == "unknown" || "$APP" == "${mcu_app[$mcu]}" ]]; then
+          printf '%s\n' "$k_local_version" "$version" | sort -V -C && def=n \
+            && echo -e "${RED}You gonna flash an older firmware !${DEFAULT}"
+        fi 
       fi
       
       # Set config_file in the scripts directory

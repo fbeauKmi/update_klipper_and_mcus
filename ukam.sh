@@ -107,7 +107,7 @@ ROLLBACK=false
 TOUPDATE=true
 VERBOSE=false
 git_option="--ff-only"
-APP="Klipper"
+APP=unknown
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
