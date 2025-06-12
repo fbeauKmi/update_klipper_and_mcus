@@ -74,6 +74,12 @@ function main() {
       show_rollback
       do_rollback
     else
+      echo -e "\n${BLUE}Do you want to confirm each MCU upgrade? (y/n)${DEFAULT}"
+      read -r confirm_input
+      if [[ "$confirm_input" =~ ^[Nn]$ ]]; then
+         CONFIRM_MCU_UPDATES=false
+      fi
+      export CONFIRM_MCU_UPDATES
       echo -e "\n${BLUE}-- Check and apply ${APP} updates --${DEFAULT}"
       update_klipper
     fi
@@ -106,6 +112,7 @@ QUIET=false
 ROLLBACK=false
 TOUPDATE=true
 VERBOSE=false
+CONFIRM_MCU_UPDATES=true
 git_option="--ff-only"
 APP="Klipper"
 
