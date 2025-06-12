@@ -167,9 +167,11 @@ function update_mcus() {
       "${DEFAULT}"
     fi
 
-    # Prompt the user whether to update this MCU
-    if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
-      continue
+    if [[ "$CONFIRM_MCU_UPDATES" != "false" ]]; then
+        # Prompt the user whether to update this MCU
+        if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
+          continue
+        fi
     fi
     # Stop klipper before build firmware
     klipperservice stop
