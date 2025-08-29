@@ -2,7 +2,7 @@
 
 # UKAM is a bash script to simplify klipper firmware updates.
 #
-# Copyright (C) 2024 fboc (Frédéric Beaucamp)
+# Copyright (C) 2024-2025 fboc (Frédéric Beaucamp)
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -32,7 +32,7 @@ source "$ukam_path/scripts/moonraker.sh"
 
 # Display versions
 ukam_version() {
-  git -C $ukam_path fetch -q
+  git -C $ukam_path fetch --force -q
   s_version=$(git -C $ukam_path describe --always --tags --long --dirty \
     2>/dev/null)
   s_remote=$(git -C $ukam_path describe "origin/$(git -C $ukam_path rev-parse \
@@ -45,16 +45,14 @@ ukam_version() {
 
 function splash() {
   echo -e "${LIGHT_MAGENTA}
-   ++————————————————————————————————++ 
-  ||    _   _ _   __  ___  ___  ___   ||
-  ||   | | | | | / / / _ \ |  \/  |   ||
-  ||   | | | | |/ / / /_\ \| .  . |   ||
-  ||   | | | |    \ |  _  || |\/| |   ||
-  ||   | |_| | |\  \| | | || |  | |   ||
-  ||    \___/\_| \_/\_| |_/\_|  |_/   ||
-  ||                                  ||
-  ++ — Update — Klipper — & — Mcus —— ++
-   ++————————————————————————————————++"
+  ++${CYAN}      __  ____ __ ___    __  ___  ${LIGHT_MAGENTA}++
+  | ${GREEN}     / / / / //_//   |  /  |/  /  ${LIGHT_MAGENTA} |
+  | ${BLUE}    / / / / ,<  / /| | / /|_/ /   ${LIGHT_MAGENTA} |
+  | ${MAGENTA}   / /_/ / /| |/ ___ |/ /  / /    ${LIGHT_MAGENTA} |
+  | ${RED}   \____/_/ |_/_/  |_/_/  /_/     ${LIGHT_MAGENTA} |          
+  |  — Update — Klipper — & — Mcus ——  |
+  ++${WHITE}    v0.0.8 Heuristic Hardfail     ${LIGHT_MAGENTA}++
+  "
   ukam_version
 }
 
@@ -107,7 +105,7 @@ ROLLBACK=false
 TOUPDATE=true
 VERBOSE=false
 git_option="--ff-only"
-APP="Klipper"
+APP=unknown
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do

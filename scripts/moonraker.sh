@@ -81,6 +81,7 @@ function get_mcus_version() {
   for mcu in "${mcus[@]}"; do
     moonraker_query "printer/objects/query?$mcu" json
     parse_json mcu_version tmp "unknown"
+    parse_json app app "unknown"
     if [[ $tmp == "unknown" ]]; then
       echo -e "${RED}Klippy state: ${printer_state}.${DEFAULT} Unable to" \
       "collect ${mcu} firmware version"
@@ -92,6 +93,7 @@ function get_mcus_version() {
       if [[ $mcu == "$mcu_section" || $mcu == "mcu ${mcu_section}" ]]; then
         klipper_section["$cmcu"]=$mcu
         mcu_version["$cmcu"]=$tmp
+        mcu_app["$cmcu"]=$app
       fi
     done
   done

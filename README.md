@@ -10,7 +10,7 @@
 
 
 ![UKAM_Banner](./images/banner.png)
-# **UKAM[^1] v0.0.7** (Genuine Glitch)
+# **UKAM[^1] v0.0.8** (Heuristic Hardfail)
 
 [^1]: Update Klipper And Mcus all-at-once. Works with Kalico too
 
@@ -35,10 +35,10 @@ UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, c
 > It will make your life easier when Klipper asks you to update your MCUs.
 
 > [!NOTE]
-> The actual version is tagged 0.0.7.
+> The actual version is tagged 0.0.8.
 >
 > New features :
-> - `klipper_section` can be declared without `mcu` prefix
+> - UKAM can determine wether firmware is Klipper or Kalico
 > 
 > Fixes:
 > - fix `is_klipper_fw` does not properly affect if declared prior to `klipper_section`.
@@ -80,7 +80,9 @@ UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, c
 >   - [Bootloader entry](https://www.klipper3d.org/Bootloader_Entry.html),
 > - [maz0R Canbus guide](https://maz0r.github.io/klipper_canbus/),
 > - Manufacturers documentations, 
->  - ...
+> - ...
+>
+> The Esoterical [CANbus guide](https://canbus.esoterical.online/) and [USB guide](https://usb.esoterical.online/) are now the reference guides for firmware installation.
 ## What UKAM does ?
 Update Klipper and apply firmware update for each mcu.
 
