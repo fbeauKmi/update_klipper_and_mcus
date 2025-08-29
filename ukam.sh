@@ -32,7 +32,8 @@ source "$ukam_path/scripts/moonraker.sh"
 
 # Display versions
 ukam_version() {
-  git -C $ukam_path fetch --force -q
+  git -C $ukam_path fetch -q
+  git -C $ukam_path fetch --tags --force -q
   s_version=$(git -C $ukam_path describe --always --tags --long --dirty \
     2>/dev/null)
   s_remote=$(git -C $ukam_path describe "origin/$(git -C $ukam_path rev-parse \
