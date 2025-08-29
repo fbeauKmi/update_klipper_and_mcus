@@ -142,7 +142,7 @@ function update_mcus() {
     if $BUILD_FIRMWARE; then
       # Check version
       if [[ "$version" == "$k_local_version" ]]; then
-        echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$k_local_version"
+        echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$version(${mcu_app[$mcu]})"
         ! $FIRMWAREONLY && echo -e "${RED}Skip flash process!${DEFAULT}" \
           && continue
         def=n
@@ -168,7 +168,7 @@ function update_mcus() {
         SHOW_MENUCFG=true
       fi
     else
-      [ -n $version ] && echo -e "$mcu_str version is ${GREEN}${version}" \
+      [ -n $version ] && echo -e "$mcu_str version is ${GREEN}${version}(${mcu_app[$mcu]})" \
       "${DEFAULT}"
     fi
 
