@@ -54,7 +54,7 @@ function do_rollback() {
       echo -e "${CYAN}  2)${DEFAULT} Rollback by version tag"
       echo -e "${CYAN}  3)${DEFAULT} Rollback by date"
       echo -e "${CYAN}  A)${DEFAULT} Abort rollback"
-      read -p "Your choice ? " rollback_type
+      read -p "${MAGENTA}Your choice ? ${DEFAULT}" rollback_type
       if [[ "${rollback_type^^}" == "A" ]]; then
         echo "Rollback aborted"
         return 0
@@ -78,8 +78,8 @@ abort ? ${DEFAULT}" nb_rollback
       2)
           commit_number=""
           while [[ ! "$commit_number" =~ ^[0-9]+$ ]]; do
-            read -p "${MAGENTA}Version tag to rollback (${k_tag}-???, only the last digits), [A] to \
-abort ? ${DEFAULT}" commit_number
+            read -p "${MAGENTA}Version tag to rollback (${k_tag}-${GREEN}??? \
+${MAGENTA}, only the last digits), [A] to  abort ? ${DEFAULT}" commit_number
             if [[ "${commit_number^^}" == "A" ]]; then
               echo "Rollback aborted"
               return 0
