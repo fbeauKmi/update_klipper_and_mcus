@@ -7,13 +7,13 @@ DO_ROLLBACK=false
 #Define function to get previous install version
 function get_rollback {
   count=0
-  filename="$1"
-  if [[ -f "$filename" ]]; then
+  rollback_file="$1"
+  if [[ -f "$rollback_file" ]]; then
     while IFS= read -r value || [[ -n "$value" ]]; do
       [ $count -eq 0 ] && rollback_version="$value"
       [ $count -eq 1 ] && rollback_repo="$value" && break
       count=$(($count + 1))
-    done <"$filename"
+    done <"$rollback_file"
   fi
   return 0
 }
@@ -72,34 +72,35 @@ abort ? ${DEFAULT}" nb_rollback
               return 0
             fi
           done
+          rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback \
+            --tags --always --long)
         ;;
       2)
-          version=""
-          tag=$(git -C ~/klipper describe --tags $(git -C ~/klipper rev-list --tags --max-count=1))
-          while [[ ! "$version" =~ ^[0-9]+$ ]]; do
-            read -p "${MAGENTA}Version tag to rollback (${tag}-???, only the last digits), [A] to \
-abort ? ${DEFAULT}" version
-            if [[ "${version^^}" == "A" ]]; then
+          commit_number=""
+          while [[ ! "$commit_number" =~ ^[0-9]+$ ]]; do
+            read -p "${MAGENTA}Version tag to rollback (${k_tag}-???, only the last digits), [A] to \
+abort ? ${DEFAULT}" commit_number
+            if [[ "${commit_number^^}" == "A" ]]; then
               echo "Rollback aborted"
               return 0
             fi
             
-            rollback_version=$(git -C ~/klipper rev-list $tag..HEAD | xargs git -C ~/klipper describe --tags --always | grep "$tag-$version")
+            rollback_version=$(git -C ~/klipper rev-list $k_fullbranch $k_tag..HEAD | \
+              xargs git -C ~/klipper describe --tags --always | \
+              grep "$k_tag-$commit_number-" | head -n 1)
             if ! git -C ~/klipper rev-parse "$rollback_version" >/dev/null 2>&1; then
               echo -e "${RED}Version $rollback_version not found${DEFAULT}"
               rollback_version=""
             fi
           done
-
-          nb_rollback=$(git -C ~/klipper rev-list --count $rollback_version..HEAD)
         ;;
       3)
           rollback_hash=""
           rollback_date=""
           while [[ ! "$rollback_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; do
-            read -p "${MAGENTA}Rollback to date (YYYY-MM-DD) , [A] to \
+            read -p "${MAGENTA}Rollback before date (YYYY-MM-DD), [A] to \
 abort ? ${DEFAULT}" rollback_date
-            if [[ "${nb_rollback^^}" == "A" ]]; then
+            if [[ "${rollback_date^^}" == "A" ]]; then
               echo "Rollback aborted"
               return 0
             fi
@@ -108,20 +109,20 @@ abort ? ${DEFAULT}" rollback_date
           rollback_hash=$(git -C ~/klipper rev-list -1 --before="$rollback_date" HEAD)
           if [[ "$rollback_hash" == "" ]]; then
             echo -e "${RED}No commit found before $rollback_date${DEFAULT}"
+            return 0
           else
-            nb_rollback=$(git -C ~/klipper rev-list --count $rollback_hash..HEAD)
+            rollback_version=$(git -C ~/klipper describe $rollback_hash --tags --always --long)
           fi
         ;;
     esac
     
-    rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback \
-      --tags --always --long)
-    if prompt "Rollback to $rollback_version ?"; then
+    [[ $rollback_version != "" ]] && prompt "Rollback to $rollback_version ?" && 
       DO_ROLLBACK=true
-    fi
   done
   if $DO_ROLLBACK; then
     git -C ~/klipper reset --hard $rollback_version
+    echo -e "\n     ${GREEN}Rollback done, you need to restart the\n     " \
+      "klipper service to apply changes${DEFAULT}"
     k_local_version=$rollback_version
     TOUPDATE=true
   else
