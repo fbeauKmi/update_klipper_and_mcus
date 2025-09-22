@@ -92,7 +92,6 @@ function load_mcus_config() {
 
     return 0
   fi
-  error_exit "$filename does not exist, unable to update"
 }
 
 function set_is_klipper_fw() {
@@ -125,6 +124,11 @@ function show_config() {
 
 # Define a function to update the firmware on the MCUs
 function update_mcus() {
+  
+  if [ -z ${#mcu_order[@]} ]; then
+    echo -e "${RED}No mcu found in $filename or file doesn't exist ! ${DEFAULT}"
+    return 0
+  fi
   # Loop over the keys (MCUs) in the flash_actions array
   for mcu in "${mcu_order[@]}"; do
     set_is_klipper_fw "$mcu"
