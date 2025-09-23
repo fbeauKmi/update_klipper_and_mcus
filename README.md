@@ -10,11 +10,11 @@
 
 
 ![UKAM_Banner](./images/banner.png)
-# **UKAM[^1] v0.0.8** (Heuristic Hardfail)
+# **UKAM[^1] v0.0.9** (Infinite Idle)
 
 [^1]: Update Klipper And Mcus all-at-once. Works with Kalico too
 
-UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
+UKAM is not so small bash script to update or rollback klipper/kalico and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 > 
 
 > [!WARNING]
@@ -35,13 +35,11 @@ UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, c
 > It will make your life easier when Klipper asks you to update your MCUs.
 
 > [!NOTE]
-> The actual version is tagged 0.0.8.
+> The actual version is tagged 0.0.9.
 >
 > New features :
-> - UKAM can determine wether firmware is Klipper or Kalico
+> - improve rollback feature
 > 
-> Fixes:
-> - fix `is_klipper_fw` does not properly affect if declared prior to `klipper_section`.
 
 ## Table of Contents 
 - [What UKAM does ?](#what-ukam-does-)
@@ -51,6 +49,7 @@ UKAM is not so small bash script to update klipper/kalico and mcus (main, rpi, c
 - [Update UKAM with Moonraker](#update-ukam-with-moonraker)
 - [Usage](#usage)
   - [Options](#options)
+  - [Rollback](#rollback)
 - [Edit mcus.ini](#edit-mcusini)
   - [mcus.ini examples](#mcusini-examples-more-to-come-)
     - [RPi microcontroller](#rpi-microcontroller)
@@ -120,7 +119,8 @@ Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/config/ukam`
 
 Ensure to make `ukam.sh` executable : 
 ```
-chmod +x ~/<script_folder>/update_klipper.sh
+chmod +x ~/<script_folder>/ukam.sh
+chmod +x ~/<script_folder>/scripts/*.sh
 ```
 
 > [!CAUTION]
@@ -178,8 +178,28 @@ Menuconfig is displayed only while config file for the mcu doesn't exists.
 #### -q --quiet : QUIET mode is Dangereous !
 
 Quiet mode allows you to update all you configure without any interaction. Just run the script and all is done. But ....
-- To use it, you need to run th script in interactive mode at least the first time.
+- To use it, you need to run the script in interactive mode at least the first time.
 - while features are modified/added/removed from menuconfig by klipper update, the config file is not updated. It may yield to a build issue.
+
+### Rollback
+
+You can also use UKAM to change Klipper or Kalico version, _if something goes wrong with the latest release_.
+>[!TIP]
+> There's no need to fully configure UKAM to use rollback.
+
+Run `~/<script_folder>/rollback.sh` or `~/<script_folder>/rollback.sh --rollback` in a terminal
+and follow the instructions.
+
+There are three ways to revert Klipper to a previous version, depending on your needs:
+
+- **By amount of commits:** Specify how many commits to go back from the current version. Use this if you know the number of updates since the desired version.  
+  _e.g., if you are under v0.13.0-272, choose **92** to go back to v0.13.190._
+
+- **By version tag:** Select a specific version tag to revert to. This is useful if you want to match an official release or a known stable version.  
+  _e.g., if you are under v0.13.0-272, choose **190** to go back to v0.13.190._
+
+- **By date (last commit before):** Roll back to the last commit before a given date. Use this if you want to restore the state as it was on a particular day, for troubleshooting or compatibility.  
+  _e.g., if you are under v0.13.0-272, choose **2025-08-04** (use the format YYYY-MM-DD ) to go back to v0.13.190._
 
 ## Edit mcus.ini
 
