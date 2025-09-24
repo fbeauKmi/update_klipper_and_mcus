@@ -11,6 +11,7 @@ k_fullbranch=""
 k_remote_version=""
 k_local_version=""
 k_repo=""
+k_tag=""
 
 #Load klipper repo informations
 function get_klipper_vars() {
@@ -21,6 +22,7 @@ function get_klipper_vars() {
     git -C ~/klipper describe "origin/$k_branch" --tags --always --long)
   k_local_version=$(git -C ~/klipper describe --tags --always --long --dirty)
   k_repo=$(git -C ~/klipper remote get-url origin)
+  k_tag=$(git -C ~/klipper describe --abbrev=0 --tags)
 }
 
 # Check if Klipper venv exists

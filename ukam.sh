@@ -52,7 +52,7 @@ function splash() {
   | ${MAGENTA}   / /_/ / /| |/ ___ |/ /  / /    ${LIGHT_MAGENTA} |
   | ${RED}   \____/_/ |_/_/  |_/_/  /_/     ${LIGHT_MAGENTA} |          
   |  — Update — Klipper — & — Mcus ——  |
-  ++${WHITE}    v0.0.8 Heuristic Hardfail     ${LIGHT_MAGENTA}++
+  ++${WHITE}       v0.0.9 Infinite Idle       ${LIGHT_MAGENTA}++
   "
   ukam_version
 }

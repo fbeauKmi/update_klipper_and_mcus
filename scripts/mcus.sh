@@ -73,10 +73,6 @@ function load_mcus_config() {
       esac
     done <<<"$file_content"
 
-    if [ ${#flash_actions[@]} == 0 ]; then
-      error_exit "No mcu in $filename, check documentation"
-    fi
-
     for mcu in "${mcu_order[@]}"; do
       if [[ -z "${flash_actions[$mcu]}" ]]; then
         error_exit "No action found for $mcu, check documentation"
@@ -92,7 +88,6 @@ function load_mcus_config() {
 
     return 0
   fi
-  error_exit "$filename does not exist, unable to update"
 }
 
 function set_is_klipper_fw() {
@@ -125,6 +120,11 @@ function show_config() {
 
 # Define a function to update the firmware on the MCUs
 function update_mcus() {
+  
+  if [ ${#mcu_order[@]} -eq 0 ]; then
+    echo -e "${RED}No mcu found in $filename or file doesn't exist ! ${DEFAULT}"
+    return 0
+  fi
   # Loop over the keys (MCUs) in the flash_actions array
   for mcu in "${mcu_order[@]}"; do
     set_is_klipper_fw "$mcu"
