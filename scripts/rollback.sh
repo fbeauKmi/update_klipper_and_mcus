@@ -53,6 +53,7 @@ function do_rollback() {
       echo -e "${CYAN}  1)${DEFAULT} Rollback by number of commits"
       echo -e "${CYAN}  2)${DEFAULT} Rollback by version tag"
       echo -e "${CYAN}  3)${DEFAULT} Rollback by date"
+      echo -e "${CYAN}  4)${DEFAULT} Rollback by hash"
       echo -e "${CYAN}  A)${DEFAULT} Abort rollback"
       read -p "${MAGENTA}Your choice ? ${DEFAULT}" rollback_type
       if [[ "${rollback_type^^}" == "A" ]]; then
@@ -118,6 +119,23 @@ ${MAGENTA} Back ? ${DEFAULT}" rollback_date
             rollback_version=$(git -C ~/klipper describe $rollback_hash --tags --always --long)
           fi
         ;;
+      4)
+          rollback_hash=""
+          while [[ ! "$rollback_hash" =~ ^[0-9a-f]{7,40}$ ]]; do
+            read -p "${MAGENTA}Rollback to commit hash (at least 7 digits), \
+${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" rollback_hash
+            if [[ "${rollback_hash^^}" == "B" ]]; then
+              rollback_type=""
+              break
+            fi
+          done
+          [[ "${rollback_type}" == "" ]] && continue
+          if ! git -C ~/klipper rev-parse "$rollback_hash" >/dev/null 2>&1; then
+            echo -e "${RED}Hash $rollback_hash not found${DEFAULT}"
+            rollback_version=""
+          else
+            rollback_version=$(git -C ~/klipper describe $rollback_hash --tags --always --long)
+          fi
     esac
     
     [[ $rollback_version != "" ]] && rollback $rollback_version && 
@@ -137,17 +155,18 @@ function rollback() {
   rb_version="$1"
   [[ "$rb_version" == "" ]] && 
     echo -e "${RED}No version specified for rollback${DEFAULT}" && return 1
-  if git -C ~/klipper rev-parse "$rb_version" >/dev/null 2>&1; then
-    nb_commits=$(git -C ~/klipper rev-list $rb_version..HEAD --count)
-    date_commit=$(git -C ~/klipper show -s --format=%ci $rb_version)
-    prefix="Rollback ${GREEN}$nb_commits${MAGENTA} commits to" && [[ $nb_commits -eq 0 ]] && prefix="Install"
-    prompt "$prefix version ${GREEN}$rb_version${MAGENTA} ($date_commit) ?" || return 1
-    git -C ~/klipper reset --hard $rb_version
-    k_local_version=$rb_version
-    return 0
-  fi
-  echo -e "${RED}Version $rb_version not found${DEFAULT}"
-  return 1
+  hash_rb=$(git -C ~/klipper rev-parse $rb_version 2>/dev/null)
+  [[ "$hash_rb" == "" ]] && 
+    echo -e "${RED}Version $rb_version not found${DEFAULT}" && return 1
+  nb_commits=$(git -C ~/klipper rev-list $rb_version..HEAD --count)
+  date_commit=$(git -C ~/klipper show -s --format=%ci $rb_version)
+  prefix="Rollback ${GREEN}$nb_commits${MAGENTA} commits to" && [[ $nb_commits -eq 0 ]] && prefix="Install"
+  logoneline=$(git -C ~/klipper show --oneline -s $hash_rb)
+  prompt "$prefix version ${GREEN}$rb_version${MAGENTA} ($date_commit) ?
+${DEFAULT}$logoneline${MAGENTA}" || return 1
+  git -C ~/klipper reset --hard $rb_version
+  k_local_version=$rb_version
+  return 0
 }
 
 function store_rollback_version() {
