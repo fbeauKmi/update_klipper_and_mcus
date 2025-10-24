@@ -17,6 +17,7 @@
 
 # Exit on error
 set -E
+
 trap 'handle_error $LINENO' ERR
 # Get Current script fullpath
 ukam_path=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
@@ -96,6 +97,11 @@ function main() {
 
   exit 0
 }
+
+if [ "$EUID" -eq 0 ]; then
+  echo -e "${RED}UKAM scripts must not be run as root!" >&2
+  exit 1
+fi
 
 CHECK=false
 FIRMWAREONLY=false
