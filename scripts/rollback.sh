@@ -47,8 +47,12 @@ function do_rollback() {
       "untracked files.${DEFAULT}"
   fi
   $DO_ROLLBACK && ! rollback $rollback_version  &&  DO_ROLLBACK=false
+  nb_rline=0
   while ! $DO_ROLLBACK; do
-    while [[ ! "$rollback_type" =~ ^[1-3]$ ]]; do
+    while [[ ! "$rollback_type" =~ ^[1-4]$ ]]; do
+      for ((i=0; i<$nb_rline; i++)); do
+        echo -ne '\e[1A\e[K' # Move cursor up and clear line
+      done
       echo -e "${MAGENTA}Select rollback type:${DEFAULT}"
       echo -e "${CYAN}  1)${DEFAULT} Rollback by number of commits"
       echo -e "${CYAN}  2)${DEFAULT} Rollback by version tag"
@@ -60,18 +64,22 @@ function do_rollback() {
         echo "Rollback aborted"
         return 0
       fi
+      nb_rline=7
     done
 
     case $rollback_type in
       1)
           nb_rollback=""
+          echo ""
           while [[ ! "$nb_rollback" =~ ^[0-9]+$ ]]; do
+            echo -ne '\e[1A\e[K' # Move cursor up and clear line
             read -p "${MAGENTA}Number of commits to rollback, \
 ${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" nb_rollback
             if [[ "${nb_rollback^^}" == "B" ]]; then
               rollback_type=""
+              nb_rline=$nb_rline+1
               break
-            fi
+            fi  
           done
           [[ "${rollback_type}" == "" ]] && continue
           rollback_version=$(git -C ~/klipper describe HEAD~$nb_rollback \
@@ -79,11 +87,14 @@ ${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" nb_rollback
         ;;
       2)
           commit_number=""
+          echo ""
           while [[ ! "$commit_number" =~ ^[0-9]+$ ]]; do
+            echo -ne '\e[1A\e[K' # Move cursor up and clear line
             read -p "${MAGENTA}Version tag to rollback (${k_tag}-${GREEN}??? \
 ${MAGENTA}, only the last digits), ${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" commit_number
             if [[ "${commit_number^^}" == "B" ]]; then
               rollback_type=""
+              nb_rline=$nb_rline+1
               break
             fi
           done
@@ -101,11 +112,14 @@ ${MAGENTA}, only the last digits), ${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" co
       3)
           rollback_hash=""
           rollback_date=""
+          echo ""
           while [[ ! "$rollback_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; do
+            echo -ne '\e[1A\e[K' # Move cursor up and clear line
             read -p "${MAGENTA}Rollback before date (YYYY-MM-DD), ${DEFAULT}[B] \
 ${MAGENTA} Back ? ${DEFAULT}" rollback_date
             if [[ "${rollback_date^^}" == "B" ]]; then
               rollback_type=""
+              nb_rline=$nb_rline+1
               break
             fi
           done
@@ -121,11 +135,14 @@ ${MAGENTA} Back ? ${DEFAULT}" rollback_date
         ;;
       4)
           rollback_hash=""
+          echo ""
           while [[ ! "$rollback_hash" =~ ^[0-9a-f]{7,40}$ ]]; do
+            echo -ne '\e[1A\e[K' # Move cursor up and clear line
             read -p "${MAGENTA}Rollback to commit hash (at least 7 digits), \
 ${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" rollback_hash
             if [[ "${rollback_hash^^}" == "B" ]]; then
               rollback_type=""
+              nb_rline=$nb_rline+1
               break
             fi
           done
@@ -136,9 +153,10 @@ ${DEFAULT}[B]${MAGENTA} Back ? ${DEFAULT}" rollback_hash
           else
             rollback_version=$(git -C ~/klipper describe $rollback_hash --tags --always --long)
           fi
+        ;;
     esac
     
-    [[ $rollback_version != "" ]] && rollback $rollback_version && 
+    [[ $rollback_version != "" ]] && nb_rline=$nb_rline+3 && rollback $rollback_version && 
       DO_ROLLBACK=true
   done
   if $DO_ROLLBACK; then

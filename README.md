@@ -187,7 +187,7 @@ You can also use UKAM to change Klipper or Kalico version, _if something goes wr
 >[!TIP]
 > There's no need to fully configure UKAM to use rollback.
 
-Run `~/<script_folder>/rollback.sh` or `~/<script_folder>/rollback.sh --rollback` in a terminal
+Run `~/<script_folder>/rollback.sh` or `~/<script_folder>/ukam.sh --rollback` in a terminal
 and follow the instructions.
 
 There are three ways to revert Klipper to a previous version, depending on your needs:

@@ -49,6 +49,10 @@ prompt() {
       ;; 
     [Nn]*) return 1 ;;
     esac
+    line_count=$(echo $1 | wc -l)
+    for ((i=0; i<$line_count; i++)); do
+      echo -ne '\e[1A\e[K' # Move cursor up and clear line
+    done
   done
 }
 
