@@ -10,7 +10,7 @@ declare -A mcu_app
 # Define an indexed array "mcu_order" to store the order of MCUs in mcus.ini
 mcu_order=()
 
-BUILD_ERROR=False
+BUILD_ERROR=false
 
 # Define a function to initialize the flash_actions array from the config file
 function load_mcus_config() {
