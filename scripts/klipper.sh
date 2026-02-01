@@ -56,7 +56,7 @@ Do you want to restart ${APP} anyway ?" n; then
    return 0
   fi
   echo -e "${YELLOW}${1^}$str Klipper service${DEFAULT}"
-  sudo service klipper $1
+  sudo systemctl $1 klipper
   return 0
 }
 
