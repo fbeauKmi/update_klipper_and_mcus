@@ -75,6 +75,7 @@ function enter_bootloader() {
   local type=""
   local serial=""
   local baudrate=""
+  local OPTIND=1
 
   # Parse command-line options
   while getopts ":t:d:b:u:" opt; do
@@ -142,7 +143,7 @@ except serial.SerialException as e:
   esac
 }
 
-function link_config {
+function link_config() {
   if [ ! -d $ukam_config ]; then
     mkdir $ukam_config
     echo -e "\n${DEFAULT}Create folder ${ukam_config}"
