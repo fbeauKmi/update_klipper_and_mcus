@@ -17,13 +17,15 @@
 UKAM is not so small bash script to update or rollback klipper/kalico and mcus (main, rpi, can, pico, ... ) and **keep trace of config file for the next update !**
 > 
 
-> [!WARNING]
+> [!NOTE]
 > ### Good to know.
-> Modern MCUs have limited write cycles (>100K cycles for an EEPROM, about 10K cycles for a STM32 chip). Updating the firmware with each release could shorten the life of your MCU.
+> Modern MCUs have limited write cycles (>100K cycles for an EEPROM, about 10K
+> cycles for a STM32 chip). Updating the firmware with each release could shorten
+> the life of your MCU.
 > 
 > ### How often should I use UKAM?
-> UKAM checks the firmware version and skip flashing process if firmware is already
-> up to date.
+> UKAM checks the firmware version and skips the flashing process if firmware is
+> already at host version.
 >
 > There's often no point to keep firmware version aligned to host version. Major 
 > changes in Klipper come from host code and documentation.
@@ -104,27 +106,18 @@ service klipper start
 
 ## Installation
 
-### Method 1 : Git clone (recommended)
 ```
 cd ~
 git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git ukam
 ```
 
-Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/config/ukam`
+Run Ukam with the following commands to create folders
 
-
-### Method 2 : Manual copy
-Copy `ukam.sh` and  `/scripts/*.sh` in a folder of your pi, `~/ukam/` sounds as a good choice. Let's call this folder `~/<script_folder>` in this Readme.
-Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/config/ukam`
-
-Ensure to make `ukam.sh` executable : 
 ```
-chmod +x ~/<script_folder>/ukam.sh
-chmod +x ~/<script_folder>/scripts/*.sh
+cd ukam
+./ukam.sh -c
 ```
 
-> [!CAUTION]
-> This method does not track update of the script 
 
 
 ## Update UKAM with Moonraker
@@ -140,7 +133,7 @@ is_system_service: False
 ```
 ## Usage
 
-Run `~/<script_folder>/ukam.sh` in a terminal, you can use the following options.
+Run `~/ukam/ukam.sh` in a terminal, you can use the following options.
 
 ### Options 
 
@@ -187,7 +180,7 @@ You can also use UKAM to change Klipper or Kalico version, _if something goes wr
 >[!TIP]
 > There's no need to fully configure UKAM to use rollback.
 
-Run `~/<script_folder>/rollback.sh` or `~/<script_folder>/ukam.sh --rollback` in a terminal
+Run `~/ukam/rollback.sh` or `~/ukam/ukam.sh --rollback` in a terminal
 and follow the instructions.
 
 There are three ways to revert Klipper to a previous version, depending on your needs:
@@ -200,6 +193,9 @@ There are three ways to revert Klipper to a previous version, depending on your 
 
 - **By date (last commit before):** Roll back to the last commit before a given date. Use this if you want to restore the state as it was on a particular day, for troubleshooting or compatibility.  
   _e.g., if you are under v0.13.0-272, choose **2025-08-04** (use the format YYYY-MM-DD ) to go back to v0.13.190._
+
+- **By hash tag:** Enter the commit hash tag of a specific version to revert to.
+  _e.g., enter **35aeb78088** to go to v0.13.1**_ (I don't know, it is just an example ) 
 
 ## Edit mcus.ini
 
@@ -396,11 +392,17 @@ to counterwork the error.
 Not to much, the script works. If you have any suggestions feel free to contact me on Voron discord @fboc
 ## Aknowledgments
 
-This script would be nothing without the development of [Klipper](https://github.com/Klipper3d/klipper),
-[Moonraker](https://github.com/Arksine/moonraker) and [Katapult](https://github.com/Arksine/katapult). 
+This script would be nothing without the development of [Kalico](https://github.com/KalicoCrew/kalico), [Katapult](https://github.com/Arksine/katapult), [Klipper](https://github.com/Klipper3d/klipper) and
+[Moonraker](https://github.com/Arksine/moonraker). 
 Many thanks to all contributors to these projects.
 
 Thanks to OldGuyMeltPlastic and the Voron community who inspires the early version of this tool ([Video from OGMP](https://youtu.be/K-luKltYgpU) and 
 [Voron documentation](https://docs.vorondesign.com/community/howto/drachenkatze/automating_klipper_mcu_updates.html))
 
 Thanks to the Voron french community for supporting/tolerating me everyday ^^.
+
+## Support UKAM
+
+If you have suggestions or feature requests for UKAM, feel free to open an issue or pull request. Your feedback is always welcome!
+
+If you'd like to support the project, you can [buy me a coffee](https://ko-fi.com/fboc4242).
