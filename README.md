@@ -295,7 +295,7 @@ action_command: make flash FLASH_DEVICE=/dev/serial/by-id/usb-Klipper_rp2040_<BO
 klipper_section: mcu
 # With katapult as bootloader
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_rp2040_<BOARD_ID>-if00
 
 ```
 _source: Cannot remember_ lol ;)
@@ -333,19 +333,19 @@ action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -u <can
 ```elixir
 [mcu tool1]
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD1_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD1_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_rp2040_<BOARD1_ID>-if00
 
 [mcu tool2]
 # Share menuconfig with mcu tool1
 config_name: mcu tool1
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARD2_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARD2_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_rp2040_<BOARD2_ID>-if00
 
 [mcu toolN]
 # Share menuconfig with mcu tool1
 config_name: mcu_tool1
 quiet_command: enter_bootloader -t usb -d /dev/serial/by-id/usb-Klipper_rp2040_<BOARDN_ID>-if00
-action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-Katapult_rp2040_<BOARDN_ID>-if00
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev/serial/by-id/usb-katapult_rp2040_<BOARDN_ID>-if00
 ```
 
 _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/10)_
