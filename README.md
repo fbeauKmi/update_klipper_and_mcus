@@ -44,8 +44,6 @@ UKAM is not so small bash script to update or rollback klipper/kalico and mcus (
 ## Table of Contents 
 - [What UKAM does ?](#what-ukam-does-)
 - [Installation](#installation)
-  - [Method 1 : git clone (recommended)](#method-1--git-clone)
-  - [Method 2 : manual copy](#method-2--manual-copy)
 - [Update UKAM with Moonraker](#update-ukam-with-moonraker)
 - [Usage](#usage)
   - [Options](#options)
@@ -104,28 +102,17 @@ service klipper start
 
 ## Installation
 
-### Method 1 : Git clone (recommended)
 ```
 cd ~
 git clone https://github.com/fbeauKmi/update_klipper_and_mcus.git ukam
 ```
 
-Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/config/ukam`
+Run Ukam with the following commands to create folders
 
-
-### Method 2 : Manual copy
-Copy `ukam.sh` and  `/scripts/*.sh` in a folder of your pi, `~/ukam/` sounds as a good choice. Let's call this folder `~/<script_folder>` in this Readme.
-Copy and edit `mcus.ini` from `examples` folder to `~/printer_data/config/ukam`
-
-Ensure to make `ukam.sh` executable : 
 ```
-chmod +x ~/<script_folder>/ukam.sh
-chmod +x ~/<script_folder>/scripts/*.sh
+cd ukam
+./ukam.sh -c
 ```
-
-> [!CAUTION]
-> This method does not track update of the script 
-
 
 ## Update UKAM with Moonraker
 
@@ -352,16 +339,26 @@ _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues
 
 #### Non Klipper firmwares
 ```elixir
-#Cartographer
+#Beacon3d
+[beacon]
+is_klipper_fw: false
+quiet_command: sudo systemctl stop klipper
+action_command: git -C ~/beacon_klipper pull
+action_command: ~/beacon_klipper/update_firmware.py update all
+
+# Cartographer
+# Note: place the Cartographer section first, as it requires Klipper to be running.
 [cartographer]
 klipper_section: mcu scanner
 is_klipper_fw: false
-action_command: ~/cartographer-klipper/scripts/firmware.py -d <canbus_uuid> -f CAN
+action_command: git -C ~/cartographer_firmware pull
+action_command: ~/cartographer_firmware/fw_update.sh
 
 # Crampon ADXL  
 [crampon]
 klipper_section: mcu crampon
 is_klipper_fw: false
+action_command: git -C ~/crampon_anchor pull
 action_command: ~/crampon_anchor/update.sh
 ```
 _source : [issue #12](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/12)_

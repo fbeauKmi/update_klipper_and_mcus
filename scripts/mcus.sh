@@ -176,11 +176,12 @@ function update_mcus() {
     if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
       continue
     fi
-    # Stop klipper before build firmware
-    klipperservice stop
+
 
     # build firmware for Klipper
     if $BUILD_FIRMWARE; then
+      # Stop Klipper before building firmware; some non-Klipper firmware scripts require Klipper running
+      klipperservice stop
       # Change to the Klipper directory
       cd ~/klipper
       # Clean the previous build and configure for the selected MCU
