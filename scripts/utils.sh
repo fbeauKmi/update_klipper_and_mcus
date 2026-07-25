@@ -8,6 +8,7 @@ UKAM: a Klipper Firmware Updater script. Update Klipper repo and mcu firmwares
 
 Optional args: <config_file> Specify the config file to use. Default 'mcus.ini'
   -c, --checkonly   Check if Klipper is up to date only.
+  -d, --debug       Show MCU configuration and build decision details
   -b, --rebase      use rebase instead of fast forward to update Klipper
   -f, --firmware    Do not merge repo, force to update firmwares
   -m, --menuconfig  Show menuconfig for all Mcus (default is to not show)
@@ -31,6 +32,14 @@ DEFAULT=$'\033[0m'
 
 # Error handler
 ERROR=false
+
+# Print implementation decisions without changing normal output.
+function debug_log() {
+  if $DEBUG; then
+    echo -e "${CYAN}[debug]${DEFAULT} $*"
+  fi
+  return 0
+}
 
 # Define a function to prompt the user with a y/n question
 prompt() {

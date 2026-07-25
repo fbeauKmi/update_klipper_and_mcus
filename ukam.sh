@@ -104,6 +104,7 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 CHECK=false
+DEBUG=false
 FIRMWAREONLY=false
 HELP=false
 MENUCONFIG=false
@@ -122,6 +123,7 @@ while [[ $# -gt 0 ]]; do
     TOUPDATE=false
     ;;
   -b | --rebase) git_option="--rebase";;
+  -d | --debug) DEBUG=true ;;
   -f | --firmware) FIRMWAREONLY=true ;;
   -h | --help) HELP=true ;;
   -m | --menuconfig) MENUCONFIG=true ;;

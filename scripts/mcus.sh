@@ -120,6 +120,11 @@ function show_config() {
 
 # Define a function to update the firmware on the MCUs
 function update_mcus() {
+  # Remember whether the preceding MCU successfully built its config. Several
+  # MCU entries can intentionally share one config_name, in which case one
+  # firmware build is enough; each entry still runs its own flash command.
+  previous_config_path=""
+  previous_config_built=false
   
   if [ ${#mcu_order[@]} -eq 0 ]; then
     echo -e "${RED}No mcu found in $filename or file doesn't exist ! ${DEFAULT}"
@@ -143,8 +148,13 @@ function update_mcus() {
       # Check version
       if [[ "$version" == "$k_local_version" ]]; then
         echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$version(${mcu_app[$mcu]})"
-        ! $FIRMWAREONLY && echo -e "${RED}Skip flash process!${DEFAULT}" \
-          && continue
+        debug_log "mcu=$mcu decision=skip-current-firmware firmware_version=$version"
+        if ! $FIRMWAREONLY; then
+          echo -e "${RED}Skip flash process!${DEFAULT}"
+          previous_config_path=""
+          previous_config_built=false
+          continue
+        fi
         def=n
       elif [ -n $version ]; then
         echo -e "$mcu_str version is ${GREEN}${version}(${mcu_app[$mcu]})" \
@@ -160,12 +170,18 @@ function update_mcus() {
       [ "${config_name["$mcu"]}" != "$mcu" ] && SHARED_CONFIG=true
       config_path="$ukam_config/config/config.$target"
       config_file_str="KCONFIG_CONFIG=$config_path"
+      debug_log "mcu=$mcu klipper_firmware=$BUILD_FIRMWARE config_name=${config_name["$mcu"]} config_path=$config_path shared_config=$SHARED_CONFIG previous_config_path=${previous_config_path:-none} previous_config_built=$previous_config_built"
       # showmenu
       if [[ ! -f $config_path ]]; then
         $QUIET && error_exit "${1^} No config file for $mcu_str in" \
           "$ukam_config/config \nDon't use quiet mode on first" \
           "firmware update!"
         SHOW_MENUCFG=true
+        debug_log "mcu=$mcu decision=menuconfig reason=config-missing"
+      elif $SHOW_MENUCFG; then
+        debug_log "mcu=$mcu decision=menuconfig reason=--menuconfig"
+      else
+        debug_log "mcu=$mcu decision=reuse-saved-menuconfig"
       fi
     else
       [ -n $version ] && echo -e "$mcu_str version is ${GREEN}${version}(${mcu_app[$mcu]})" \
@@ -174,45 +190,69 @@ function update_mcus() {
 
     # Prompt the user whether to update this MCU
     if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
+      debug_log "mcu=$mcu decision=skip-user-prompt"
+      if $BUILD_FIRMWARE; then
+        previous_config_path="$config_path"
+      else
+        previous_config_path=""
+      fi
+      previous_config_built=false
       continue
     fi
+    debug_log "mcu=$mcu decision=continue-user-prompt"
 
 
     # build firmware for Klipper
     if $BUILD_FIRMWARE; then
-      # Stop Klipper before building firmware; some non-Klipper firmware scripts require Klipper running
-      klipperservice stop
-      # Change to the Klipper directory
-      cd ~/klipper
-      # Clean the previous build and configure for the selected MCU
-      make clean $config_file_str
-      # Open menuconfig if needed
-      $SHOW_MENUCFG && make menuconfig $config_file_str
-
-      # Check if forged ID is present in config file for shared config
-      if $SHARED_CONFIG; then
-        while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|\
-# CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
-          echo -e "${RED}Forged Serial/CanBus ID is incompatible with" \
-            "config_name option.${DEFAULT}"
-          if prompt "Change menuconfig now ?"; then
-            make menuconfig $config_file_str
-          else
-            error_exit "Serial ID must not be forged with config_name option"
-          fi
-        done
-      fi
-      
       BUILD_ERROR=false
-      trap 'build_error $LINENO' ERR
-      # Check CPU thread number (added by @roguyt to build faster)
-      CPUS=$(grep -c ^processor /proc/cpuinfo)
-      if $QUIET; then
-        make -j $CPUS $config_file_str > /dev/null
+      if $previous_config_built && [[ "$config_path" == "$previous_config_path" ]]; then
+        debug_log "mcu=$mcu decision=skip-build reason=same-config-as-previous config_path=$config_path"
+        echo -e "${YELLOW}Reuse firmware already built for shared config: ${config_name["$mcu"]}${DEFAULT}"
+        # menuconfig was already shown for this config on the previous entry.
+        SHOW_MENUCFG=false
       else
-        make -j $CPUS $config_file_str
+        debug_log "mcu=$mcu decision=build config_path=$config_path menuconfig=$SHOW_MENUCFG"
+        # Stop Klipper before building firmware; some non-Klipper firmware scripts require Klipper running
+        klipperservice stop
+        # Change to the Klipper directory
+        cd ~/klipper
+        # Clean the previous build and configure for the selected MCU
+        make clean $config_file_str
+        # Open menuconfig if needed
+        $SHOW_MENUCFG && make menuconfig $config_file_str
+
+        # Check if forged ID is present in config file for shared config
+        if $SHARED_CONFIG; then
+          while grep -q -E "# CONFIG_USB_SERIAL_NUMBER_CHIPID|\
+# CONFIG_CAN_UUID_USE_CHIPID" $config_path; do
+            echo -e "${RED}Forged Serial/CanBus ID is incompatible with" \
+              "config_name option.${DEFAULT}"
+            if prompt "Change menuconfig now ?"; then
+              make menuconfig $config_file_str
+            else
+              error_exit "Serial ID must not be forged with config_name option"
+            fi
+          done
+        fi
+
+        trap 'build_error $LINENO' ERR
+        # Check CPU thread number (added by @roguyt to build faster)
+        CPUS=$(grep -c ^processor /proc/cpuinfo)
+        if $QUIET; then
+          make -j $CPUS $config_file_str > /dev/null
+        else
+          make -j $CPUS $config_file_str
+        fi
+        trap 'handle_error $LINENO' ERR
+        if ! $BUILD_ERROR; then
+          previous_config_built=true
+          debug_log "mcu=$mcu build=success config_path=$config_path"
+        else
+          previous_config_built=false
+          debug_log "mcu=$mcu build=failed config_path=$config_path"
+        fi
       fi
-      trap 'handle_error $LINENO' ERR
+      previous_config_path="$config_path"
     fi
 
     if ! $BUILD_ERROR && { ! $SHOW_MENUCFG || prompt "Press [Y] to flash $mcu_str"; }; then
@@ -226,8 +266,13 @@ function update_mcus() {
         fi
         [[ ! "$command" =~ ">/dev/null" ]] && ! $QUIET &&
           echo "Command: $command"
+        debug_log "mcu=$mcu decision=run-flash-command command=$command"
         eval "$command"
       done
+    fi
+    if ! $BUILD_FIRMWARE; then
+      previous_config_path=""
+      previous_config_built=false
     fi
   done
   return 0
