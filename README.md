@@ -147,7 +147,7 @@ Optional args: <config_file> Specify the config file to use. Default is 'mcus.in
   -m, --menuconfig           Show menuconfig for all Mcus (default do not show menuconfig)
   -r, --rollback             Rollback to a previous version
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
-  -v, --verbose              Display parsed config
+  -v, --verbose              For debug purpose, display parsed config
   -h, --help                 Display this help message and exit
 ```
 #### -c --checkonly
@@ -198,7 +198,7 @@ When UKAM processes an MCU whose `config_name` matches the MCU immediately befor
 
 Keep all MCU entries that share a `config_name` together, in sequential order, in `mcus.ini`. **CAUTION:** Share a `config_name` only between identical hardware configurations, and leave the serial-number and CAN UUID chip-ID options disabled.
 
-Example: five identical MMU lane boards share the `mcu_lanes` configuration. The entries below must remain adjacent; additional lane entries use the same pattern.
+Example: 3 identical MMU lane boards share the `mcu_lanes` configuration. The entries below must remain adjacent; additional lane entries use the same pattern.
 
 ```ini
 # ---------------------------------------------------------------------

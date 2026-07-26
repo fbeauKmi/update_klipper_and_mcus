@@ -13,7 +13,7 @@ Optional args: <config_file> Specify the config file to use. Default 'mcus.ini'
   -m, --menuconfig  Show menuconfig for all Mcus (default is to not show)
   -r, --rollback    Rollback to a previous version
   -q, --quiet       Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
-  -v, --verbose     Show parsed config
+  -v, --verbose     For debug purpose, show parsed config
   -h, --help        Display this help message and exit
 EOF
 }
