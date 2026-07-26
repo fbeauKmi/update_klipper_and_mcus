@@ -39,6 +39,7 @@ UKAM is not so small bash script to update or rollback klipper/kalico and mcus (
 >
 > New features :
 > - improve rollback feature
+> - Skip Make
 > 
 
 ## Table of Contents 
@@ -48,6 +49,7 @@ UKAM is not so small bash script to update or rollback klipper/kalico and mcus (
 - [Usage](#usage)
   - [Options](#options)
   - [Rollback](#rollback)
+  - [Skip Make](#skip-make)
 - [Edit mcus.ini](#edit-mcusini)
   - [mcus.ini examples](#mcusini-examples-more-to-come-)
     - [RPi microcontroller](#rpi-microcontroller)
@@ -145,7 +147,7 @@ Optional args: <config_file> Specify the config file to use. Default is 'mcus.in
   -m, --menuconfig           Show menuconfig for all Mcus (default do not show menuconfig)
   -r, --rollback             Rollback to a previous version
   -q, --quiet                Quiet mode, proceed all if needed tasks, !SKIP MENUCONFIG! 
-  -v, --verbose              For debug purpose, display parsed config
+  -v, --verbose              Display parsed config
   -h, --help                 Display this help message and exit
 ```
 #### -c --checkonly
@@ -185,8 +187,47 @@ There are three ways to revert Klipper to a previous version, depending on your 
 - **By version tag:** Select a specific version tag to revert to. This is useful if you want to match an official release or a known stable version.  
   _e.g., if you are under v0.13.0-272, choose **190** to go back to v0.13.190._
 
-- **By date (last commit before):** Roll back to the last commit before a given date. Use this if you want to restore the state as it was on a particular day, for troubleshooting or compatibility.  
+- **By date (last commit before):** Roll back to the last commit before a given date. Use this if you want to restore the state as it was on a particular day, for troubleshooting or compatibility.
   _e.g., if you are under v0.13.0-272, choose **2025-08-04** (use the format YYYY-MM-DD ) to go back to v0.13.190._
+
+## Skip Make
+
+Use `config_name` when multiple MCUs have identical firmware settings. Give each of those MCU entries the same `config_name`.
+
+When UKAM processes an MCU whose `config_name` matches the MCU immediately before it in `mcus.ini`, it skips `make menuconfig` and `make`, then reuses the firmware built for the previous MCU. Each MCU still runs its own `action_command` to flash that firmware.
+
+Keep all MCU entries that share a `config_name` together, in sequential order, in `mcus.ini`. **CAUTION:** Share a `config_name` only between identical hardware configurations, and leave the serial-number and CAN UUID chip-ID options disabled.
+
+Example: five identical MMU lane boards share the `mcu_lanes` configuration. The entries below must remain adjacent; additional lane entries use the same pattern.
+
+```ini
+# ---------------------------------------------------------------------
+# MMU LANE BOARDS (3x SLB, STM32) — CAN, Katapult
+# ---------------------------------------------------------------------
+# klipper_section values match: [mcu lane0] ... [mcu lane4]
+# UUIDs confirmed from printer.cfg.
+#
+# NOTE: config_name is shared across all 3 lanes below, which tells
+# UKAM theyre identical hardware and only needs ONE make menuconfig
+# pass for all of them. Only do this if all 3 SLB boards are genuinely
+# the same chip/revision — if any differ, give that one its own
+# config_name instead.
+
+[lane0]
+klipper_section: mcu lane0
+config_name: mcu_lanes
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -u b8aec8d79292
+
+[lane1]
+klipper_section: mcu lane1
+config_name: mcu_lanes
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -u b4a7310611cb
+
+[lane2]
+klipper_section: mcu lane2
+config_name: mcu_lanes
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -u 22bb3b8534eb
+```
 
 ## Edit mcus.ini
 

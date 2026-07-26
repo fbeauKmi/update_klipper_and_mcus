@@ -148,7 +148,6 @@ function update_mcus() {
       # Check version
       if [[ "$version" == "$k_local_version" ]]; then
         echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$version(${mcu_app[$mcu]})"
-        debug_log "mcu=$mcu decision=skip-current-firmware firmware_version=$version"
         if ! $FIRMWAREONLY; then
           echo -e "${RED}Skip flash process!${DEFAULT}"
           previous_config_path=""
@@ -170,18 +169,14 @@ function update_mcus() {
       [ "${config_name["$mcu"]}" != "$mcu" ] && SHARED_CONFIG=true
       config_path="$ukam_config/config/config.$target"
       config_file_str="KCONFIG_CONFIG=$config_path"
-      debug_log "mcu=$mcu klipper_firmware=$BUILD_FIRMWARE config_name=${config_name["$mcu"]} config_path=$config_path shared_config=$SHARED_CONFIG previous_config_path=${previous_config_path:-none} previous_config_built=$previous_config_built"
       # showmenu
       if [[ ! -f $config_path ]]; then
         $QUIET && error_exit "${1^} No config file for $mcu_str in" \
           "$ukam_config/config \nDon't use quiet mode on first" \
           "firmware update!"
         SHOW_MENUCFG=true
-        debug_log "mcu=$mcu decision=menuconfig reason=config-missing"
       elif $SHOW_MENUCFG; then
-        debug_log "mcu=$mcu decision=menuconfig reason=--menuconfig"
       else
-        debug_log "mcu=$mcu decision=reuse-saved-menuconfig"
       fi
     else
       [ -n $version ] && echo -e "$mcu_str version is ${GREEN}${version}(${mcu_app[$mcu]})" \
@@ -190,7 +185,6 @@ function update_mcus() {
 
     # Prompt the user whether to update this MCU
     if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
-      debug_log "mcu=$mcu decision=skip-user-prompt"
       if $BUILD_FIRMWARE; then
         previous_config_path="$config_path"
       else
@@ -199,19 +193,16 @@ function update_mcus() {
       previous_config_built=false
       continue
     fi
-    debug_log "mcu=$mcu decision=continue-user-prompt"
 
 
     # build firmware for Klipper
     if $BUILD_FIRMWARE; then
       BUILD_ERROR=false
       if $previous_config_built && [[ "$config_path" == "$previous_config_path" ]]; then
-        debug_log "mcu=$mcu decision=skip-build reason=same-config-as-previous config_path=$config_path"
         echo -e "${YELLOW}Reuse firmware already built for shared config: ${config_name["$mcu"]}${DEFAULT}"
         # menuconfig was already shown for this config on the previous entry.
         SHOW_MENUCFG=false
       else
-        debug_log "mcu=$mcu decision=build config_path=$config_path menuconfig=$SHOW_MENUCFG"
         # Stop Klipper before building firmware; some non-Klipper firmware scripts require Klipper running
         klipperservice stop
         # Change to the Klipper directory
@@ -246,10 +237,8 @@ function update_mcus() {
         trap 'handle_error $LINENO' ERR
         if ! $BUILD_ERROR; then
           previous_config_built=true
-          debug_log "mcu=$mcu build=success config_path=$config_path"
         else
           previous_config_built=false
-          debug_log "mcu=$mcu build=failed config_path=$config_path"
         fi
       fi
       previous_config_path="$config_path"
@@ -266,7 +255,6 @@ function update_mcus() {
         fi
         [[ ! "$command" =~ ">/dev/null" ]] && ! $QUIET &&
           echo "Command: $command"
-        debug_log "mcu=$mcu decision=run-flash-command command=$command"
         eval "$command"
       done
     fi
