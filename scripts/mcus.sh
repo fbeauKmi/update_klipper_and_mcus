@@ -120,11 +120,10 @@ function show_config() {
 
 # Define a function to update the firmware on the MCUs
 function update_mcus() {
-  # Remember whether the preceding MCU successfully built its config. Several
-  # MCU entries can intentionally share one config_name, in which case one
-  # firmware build is enough; each entry still runs its own flash command.
+  # Several MCU entries can intentionally share one config_name, in which case
+  # one firmware build is enough; each entry still runs its own flash command.
+  # This is set only after a successful build.
   previous_config_path=""
-  previous_config_built=false
   
   if [ ${#mcu_order[@]} -eq 0 ]; then
     echo -e "${RED}No mcu found in $filename or file doesn't exist ! ${DEFAULT}"
@@ -150,8 +149,6 @@ function update_mcus() {
         echo "${WHITE}$mcu_str${MAGENTA} version is ${GREEN}$version(${mcu_app[$mcu]})"
         if ! $FIRMWAREONLY; then
           echo -e "${RED}Skip flash process!${DEFAULT}"
-          previous_config_path=""
-          previous_config_built=false
           continue
         fi
         def=n
@@ -175,8 +172,6 @@ function update_mcus() {
           "$ukam_config/config \nDon't use quiet mode on first" \
           "firmware update!"
         SHOW_MENUCFG=true
-      elif $SHOW_MENUCFG; then
-      else
       fi
     else
       [ -n $version ] && echo -e "$mcu_str version is ${GREEN}${version}(${mcu_app[$mcu]})" \
@@ -185,12 +180,6 @@ function update_mcus() {
 
     # Prompt the user whether to update this MCU
     if ! prompt "Update firmware of ${WHITE}$mcu_str${MAGENTA} ?" $def; then
-      if $BUILD_FIRMWARE; then
-        previous_config_path="$config_path"
-      else
-        previous_config_path=""
-      fi
-      previous_config_built=false
       continue
     fi
 
@@ -198,7 +187,7 @@ function update_mcus() {
     # build firmware for Klipper
     if $BUILD_FIRMWARE; then
       BUILD_ERROR=false
-      if $previous_config_built && [[ "$config_path" == "$previous_config_path" ]]; then
+      if [[ "$config_path" == "$previous_config_path" ]]; then
         echo -e "${YELLOW}Reuse firmware already built for shared config: ${config_name["$mcu"]}${DEFAULT}"
         # menuconfig was already shown for this config on the previous entry.
         SHOW_MENUCFG=false
@@ -236,12 +225,9 @@ function update_mcus() {
         fi
         trap 'handle_error $LINENO' ERR
         if ! $BUILD_ERROR; then
-          previous_config_built=true
-        else
-          previous_config_built=false
+          previous_config_path="$config_path"
         fi
       fi
-      previous_config_path="$config_path"
     fi
 
     if ! $BUILD_ERROR && { ! $SHOW_MENUCFG || prompt "Press [Y] to flash $mcu_str"; }; then
@@ -257,10 +243,6 @@ function update_mcus() {
           echo "Command: $command"
         eval "$command"
       done
-    fi
-    if ! $BUILD_FIRMWARE; then
-      previous_config_path=""
-      previous_config_built=false
     fi
   done
   return 0
