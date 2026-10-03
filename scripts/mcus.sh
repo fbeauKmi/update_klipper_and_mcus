@@ -120,6 +120,8 @@ function show_config() {
 
 # Define a function to update the firmware on the MCUs
 function update_mcus() {
+  # Store last built config_name
+  local last_built=""
   
   if [ ${#mcu_order[@]} -eq 0 ]; then
     echo -e "${RED}No mcu found in $filename or file doesn't exist ! ${DEFAULT}"
@@ -179,7 +181,7 @@ function update_mcus() {
 
 
     # build firmware for Klipper
-    if $BUILD_FIRMWARE; then
+    if $BUILD_FIRMWARE && [ "${config_name["$mcu"]}" != "$last_built" ]; then
       # Stop Klipper before building firmware; some non-Klipper firmware scripts require Klipper running
       klipperservice stop
       # Change to the Klipper directory
@@ -213,6 +215,11 @@ function update_mcus() {
         make -j $CPUS $config_file_str
       fi
       trap 'handle_error $LINENO' ERR
+
+      last_built=""
+      ! $BUILD_ERROR && last_built="${config_name["$mcu"]}"
+    elif $BUILD_FIRMWARE; then
+      echo -e "$mcu_str${MAGENTA} firmware already built, skip build process.${DEFAULT}"
     fi
 
     if ! $BUILD_ERROR && { ! $SHOW_MENUCFG || prompt "Press [Y] to flash $mcu_str"; }; then

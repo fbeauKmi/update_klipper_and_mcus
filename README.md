@@ -39,7 +39,8 @@ UKAM is not so small bash script to update or rollback klipper/kalico and mcus (
 >
 > New features :
 > - improve rollback feature
-> 
+> - skip firmware built with `config_name`
+>
 
 ## Table of Contents 
 - [What UKAM does ?](#what-ukam-does-)
@@ -195,7 +196,7 @@ There are three ways to revert Klipper to a previous version, depending on your 
 - `klipper_section` : the name of section in Klipper without the bracket. It helps to track firmware version on mcus. _Tip : You can use same section name in mcus.ini as klipper instead._
 > [!NOTE]
 > Entry is case-sensitive. Ensure that the `klipper_section` matches the case of the corresponding name in the Klipper configuration.
-- `config_name` [optional] : The name of the file used by menuconfig. Multiple MCU entries can share the same `config_name`. See [Toolchanger config example](#toolchanger--usb-connection).
+- `config_name` [optional] : The name of the file used by menuconfig. Multiple MCU entries can share the same `config_name`. See [Toolchanger config example](#toolchanger--usb-connection). It can skip firmware built in some conditions (See [Skip make](#skip-make) ) 
 - **NEW** `is_klipper_fw` [optional]: `true|false` Determines whether Klipper firmware should be built. By default, `true` for sections starting with `mcu`, `false` for other section types (e.g., `beacon`, `crampon`, `high_resolution_filament_sensor`, `scanner`, ...). See [Non Klipper firmwares examples](#non-klipper-firmwares)
 - `action_command` [required] : command executed after the firmware build, whatever you need to prepare, flash or switch off/on the mcu. You can separate command by `;` or use several action_command in a section, they are executed in order of appearance.
 - `quiet_command` : same as action_command but without stdout in QUIET mode
@@ -336,6 +337,31 @@ action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -d /dev
 ```
 
 _source : [issue #10](https://github.com/fbeauKmi/update_klipper_and_mcus/issues/10)_
+
+#### Skip make
+
+Use `config_name` when multiple MCUs share the same firmware settings. UKAM reuses the last built firmware for matching entries, but still flashes each board with its own `action_command`.
+
+Keep matching entries together in `mcus.ini`. Only share a `config_name` for identical hardware, and leave serial-number/CAN UUID chip-ID options disabled.
+
+```elixir
+
+[lane0]
+klipper_section: mcu lane0
+config_name: mcu_lanes
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -u b8aec8d79292
+
+[lane1]
+klipper_section: mcu lane1
+config_name: mcu_lanes
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -u b4a7310611cb
+
+[lane2]
+klipper_section: mcu lane2
+config_name: mcu_lanes
+action_command: ~/klippy-env/bin/python3 ~/katapult/scripts/flashtool.py -i can0 -u 22bb3b8534eb
+```
+_source : [PR #38](https://github.com/fbeauKmi/update_klipper_and_mcus/pull/38) by @cwiegert_
 
 #### Non Klipper firmwares
 ```elixir
